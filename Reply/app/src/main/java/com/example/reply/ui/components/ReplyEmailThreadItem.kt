@@ -101,7 +101,6 @@ fun ReplyEmailThreadItem(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
