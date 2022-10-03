@@ -121,7 +121,13 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-
-    kapt(libs.androidx.room.compiler)
     coreLibraryDesugaring(libs.core.jdk.desugaring)
+
+    val media3_version = "1.0.0-beta02"
+
+    implementation("androidx.media3:media3-exoplayer:$media3_version")
+    // For building media playback UIs
+    implementation("androidx.media3:media3-ui:$media3_version")
+    // For exposing and controlling media sessions
+    implementation("androidx.media3:media3-session:$media3_version")
 }

@@ -16,24 +16,30 @@
 
 package com.example.jetcaster.ui
 
+import android.content.ComponentName
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker.Companion.getOrCreate
+import com.example.jetcaster.play.PlaybackService
 import com.example.jetcaster.ui.theme.JetcasterTheme
 import com.example.jetcaster.util.DevicePosture
 import com.example.jetcaster.util.isBookPosture
 import com.example.jetcaster.util.isSeparatingPosture
 import com.example.jetcaster.util.isTableTopPosture
+import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class MainActivity : ComponentActivity() {
+    private var mediaController: MediaController? = null;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -54,7 +60,10 @@ class MainActivity : ComponentActivity() {
                     isBookPosture(foldingFeature) ->
                         DevicePosture.BookPosture(foldingFeature.bounds)
                     isSeparatingPosture(foldingFeature) ->
-                        DevicePosture.SeparatingPosture(foldingFeature.bounds, foldingFeature.orientation)
+                        DevicePosture.SeparatingPosture(
+                            foldingFeature.bounds,
+                            foldingFeature.orientation
+                        )
                     else -> DevicePosture.NormalPosture
                 }
             }
@@ -69,5 +78,20 @@ class MainActivity : ComponentActivity() {
                 JetcasterApp(devicePosture)
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val sessionToken = SessionToken(this, ComponentName(this, PlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.addListener(
+            { mediaController = controllerFuture.get() },
+            MoreExecutors.directExecutor()
+        )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaController?.release()
     }
 }
