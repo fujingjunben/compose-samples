@@ -40,7 +40,9 @@ data class PlayerUiState(
     val podcastName: String = "",
     val author: String = "",
     val summary: String = "",
-    val podcastImageUrl: String = ""
+    val podcastImageUrl: String = "",
+    val url: String = "",
+    val isPlaying: Boolean = false
 )
 
 /**
@@ -62,13 +64,15 @@ class PlayerViewModel(
     init {
         viewModelScope.launch {
             val episode = episodeStore.episodeWithUri(episodeUri).first()
+            println("episode: $episode")
             val podcast = podcastStore.podcastWithUri(episode.podcastUri).first()
             uiState = PlayerUiState(
                 title = episode.title,
                 duration = episode.duration,
                 podcastName = podcast.title,
                 summary = episode.summary ?: "",
-                podcastImageUrl = podcast.imageUrl ?: ""
+                podcastImageUrl = podcast.imageUrl ?: "",
+                url = episode.uri
             )
         }
     }

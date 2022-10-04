@@ -143,7 +143,7 @@ private fun SyndFeed.toPodcastResponse(feedUrl: String): PodcastRssResponse {
 private fun SyndEntry.toEpisode(podcastUri: String): Episode {
     val entryInformation = getModule(PodcastModuleDtd) as? EntryInformation
     return Episode(
-        uri = uri,
+        uri = if (enclosures.isEmpty()) "" else enclosures[0].url,
         podcastUri = podcastUri,
         title = title,
         author = author,

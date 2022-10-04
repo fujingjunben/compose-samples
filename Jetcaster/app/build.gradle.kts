@@ -121,6 +121,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
     coreLibraryDesugaring(libs.core.jdk.desugaring)
 
     val media3_version = "1.0.0-beta02"

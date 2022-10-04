@@ -17,6 +17,7 @@
 package com.example.jetcaster.ui.player
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,12 +56,10 @@ import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PauseCircleFilled
 import androidx.compose.material.icons.rounded.PlayCircleFilled
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,11 +97,12 @@ import java.time.Duration
 fun PlayerScreen(
     viewModel: PlayerViewModel,
     devicePosture: StateFlow<DevicePosture>,
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    play: (state: PlayerUiState) -> Boolean
 ) {
     val uiState = viewModel.uiState
     val devicePostureValue by devicePosture.collectAsState()
-    PlayerScreen(uiState, devicePostureValue, onBackPress)
+    PlayerScreen(uiState, devicePostureValue, onBackPress, play)
 }
 
 /**
@@ -113,11 +113,12 @@ private fun PlayerScreen(
     uiState: PlayerUiState,
     devicePosture: DevicePosture,
     onBackPress: () -> Unit,
+    play: (state: PlayerUiState) -> Boolean = { false },
     modifier: Modifier = Modifier
 ) {
     Surface(modifier) {
         if (uiState.podcastName.isNotEmpty()) {
-            PlayerContent(uiState, devicePosture, onBackPress)
+            PlayerContent(uiState, devicePosture, onBackPress, play)
         } else {
             FullScreenLoading(modifier)
         }
@@ -128,7 +129,8 @@ private fun PlayerScreen(
 fun PlayerContent(
     uiState: PlayerUiState,
     devicePosture: DevicePosture,
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    play: (state: PlayerUiState) -> Boolean
 ) {
     PlayerDynamicTheme(uiState.podcastImageUrl) {
         // As the Player UI content changes considerably when the device is in tabletop posture,
@@ -154,7 +156,7 @@ fun PlayerContent(
                     )
                 }
             else ->
-                PlayerContentRegular(uiState, onBackPress)
+                PlayerContentRegular(uiState, onBackPress, play)
         }
     }
 }
@@ -162,7 +164,8 @@ fun PlayerContent(
 @Composable
 private fun PlayerContentRegular(
     uiState: PlayerUiState,
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    play: (state: PlayerUiState) -> Boolean
 ) {
     Column(
         modifier = Modifier
@@ -193,7 +196,9 @@ private fun PlayerContentRegular(
                 modifier = Modifier.weight(10f)
             ) {
                 PlayerSlider(uiState.duration)
-                PlayerButtons(Modifier.padding(vertical = 8.dp))
+                PlayerButtons(Modifier.padding(vertical = 8.dp), play = { isPlaying ->
+                    play(uiState.copy(isPlaying = isPlaying))
+                })
             }
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -468,8 +473,10 @@ private fun PlayerSlider(episodeDuration: Duration?) {
 private fun PlayerButtons(
     modifier: Modifier = Modifier,
     playerButtonSize: Dp = 72.dp,
-    sideButtonSize: Dp = 48.dp
+    sideButtonSize: Dp = 48.dp,
+    play: (isPlaying: Boolean) -> Boolean = {false}
 ) {
+    var state by remember { mutableStateOf(Icons.Rounded.PlayCircleFilled) }
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -494,13 +501,27 @@ private fun PlayerButtons(
             modifier = buttonsModifier
         )
         Image(
-            imageVector = Icons.Rounded.PlayCircleFilled,
+            imageVector = state,
             contentDescription = stringResource(R.string.cd_play),
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
             modifier = Modifier
                 .size(playerButtonSize)
                 .semantics { role = Role.Button }
+                .clickable {
+                    when (state) {
+                        Icons.Rounded.PlayCircleFilled -> {
+                            if (play(false)) {
+                                state = Icons.Rounded.PauseCircleFilled
+                            }
+                        }
+                        Icons.Rounded.PauseCircleFilled -> {
+                            if (play(true)) {
+                                state = Icons.Rounded.PlayCircleFilled
+                            }
+                        }
+                    }
+                }
         )
         Image(
             imageVector = Icons.Filled.Forward30,
@@ -588,7 +609,7 @@ fun PlayerScreenPreview() {
                 podcastName = "Podcast"
             ),
             devicePosture = DevicePosture.NormalPosture,
-            onBackPress = { }
+            onBackPress = { },
         )
     }
 }
