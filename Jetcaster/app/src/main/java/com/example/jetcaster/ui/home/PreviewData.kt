@@ -17,7 +17,7 @@
 package com.example.jetcaster.ui.home
 
 import com.example.jetcaster.data.Category
-import com.example.jetcaster.data.Episode
+import com.example.jetcaster.data.EpisodeEntity
 import com.example.jetcaster.data.Podcast
 import com.example.jetcaster.data.PodcastWithExtraInfo
 import java.time.OffsetDateTime
@@ -51,7 +51,7 @@ val PreviewPodcastsWithExtraInfo = PreviewPodcasts.mapIndexed { index, podcast -
 }
 
 val PreviewEpisodes = listOf(
-    Episode(
+    EpisodeEntity(
         uri = "fakeUri://episode/1",
         podcastUri = PreviewPodcasts[0].uri,
         title = "Episode 140: Bubbles!",

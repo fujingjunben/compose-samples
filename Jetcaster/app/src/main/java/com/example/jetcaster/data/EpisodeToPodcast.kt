@@ -23,7 +23,7 @@ import java.util.Objects
 
 class EpisodeToPodcast {
     @Embedded
-    lateinit var episode: Episode
+    lateinit var episode: EpisodeEntity
 
     @Relation(parentColumn = "podcast_uri", entityColumn = "uri")
     lateinit var _podcasts: List<Podcast>

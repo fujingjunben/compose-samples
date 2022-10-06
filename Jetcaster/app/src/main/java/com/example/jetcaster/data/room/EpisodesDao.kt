@@ -23,12 +23,12 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.example.jetcaster.data.Episode
+import com.example.jetcaster.data.EpisodeEntity
 import com.example.jetcaster.data.EpisodeToPodcast
 import kotlinx.coroutines.flow.Flow
 
 /**
- * [Room] DAO for [Episode] related operations.
+ * [Room] DAO for [EpisodeEntity] related operations.
  */
 @Dao
 abstract class EpisodesDao {
@@ -38,7 +38,7 @@ abstract class EpisodesDao {
         SELECT * FROM episodes WHERE uri = :uri
         """
     )
-    abstract fun episode(uri: String): Flow<Episode>
+    abstract fun episode(uri: String): Flow<EpisodeEntity>
 
     @Query(
         """
@@ -50,7 +50,7 @@ abstract class EpisodesDao {
     abstract fun episodesForPodcastUri(
         podcastUri: String,
         limit: Int
-    ): Flow<List<Episode>>
+    ): Flow<List<EpisodeEntity>>
 
     @Transaction
     @Query(
@@ -77,17 +77,17 @@ abstract class EpisodesDao {
      */
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insert(entity: Episode): Long
+    abstract suspend fun insert(entity: EpisodeEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertAll(vararg entity: Episode)
+    abstract suspend fun insertAll(vararg entity: EpisodeEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertAll(entities: Collection<Episode>)
+    abstract suspend fun insertAll(entities: Collection<EpisodeEntity>)
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun update(entity: Episode)
+    abstract suspend fun update(entity: EpisodeEntity)
 
     @Delete
-    abstract suspend fun delete(entity: Episode): Int
+    abstract suspend fun delete(entity: EpisodeEntity): Int
 }

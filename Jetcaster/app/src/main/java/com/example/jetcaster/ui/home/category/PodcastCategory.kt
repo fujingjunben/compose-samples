@@ -72,7 +72,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.jetcaster.R
-import com.example.jetcaster.data.Episode
+import com.example.jetcaster.data.EpisodeEntity
 import com.example.jetcaster.data.EpisodeToPodcast
 import com.example.jetcaster.data.Podcast
 import com.example.jetcaster.data.PodcastWithExtraInfo
@@ -147,7 +147,7 @@ private fun EpisodeList(
 
 @Composable
 fun EpisodeListItem(
-    episode: Episode,
+    episode: EpisodeEntity,
     podcast: Podcast,
     onClick: (String) -> Unit,
     modifier: Modifier = Modifier

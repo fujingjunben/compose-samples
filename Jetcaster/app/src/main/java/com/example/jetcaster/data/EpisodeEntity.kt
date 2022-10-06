@@ -42,7 +42,7 @@ import java.time.OffsetDateTime
     ]
 )
 @Immutable
-data class Episode(
+data class EpisodeEntity(
     @PrimaryKey @ColumnInfo(name = "uri") val uri: String,
     @ColumnInfo(name = "podcast_uri") val podcastUri: String,
     @ColumnInfo(name = "title") val title: String,
@@ -50,5 +50,6 @@ data class Episode(
     @ColumnInfo(name = "summary") val summary: String? = null,
     @ColumnInfo(name = "author") val author: String? = null,
     @ColumnInfo(name = "published") val published: OffsetDateTime,
-    @ColumnInfo(name = "duration") val duration: Duration? = null
+    @ColumnInfo(name = "duration") val duration: Duration? = null,
+    @ColumnInfo(name = "position") val position: Long = 0L
 )

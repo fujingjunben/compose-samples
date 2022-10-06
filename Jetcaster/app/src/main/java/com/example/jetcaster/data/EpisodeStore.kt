@@ -20,7 +20,7 @@ import com.example.jetcaster.data.room.EpisodesDao
 import kotlinx.coroutines.flow.Flow
 
 /**
- * A data repository for [Episode] instances.
+ * A data repository for [EpisodeEntity] instances.
  */
 class EpisodeStore(
     private val episodesDao: EpisodesDao
@@ -28,7 +28,7 @@ class EpisodeStore(
     /**
      * Returns a flow containing the episode given [episodeUri].
      */
-    fun episodeWithUri(episodeUri: String): Flow<Episode> {
+    fun episodeWithUri(episodeUri: String): Flow<EpisodeEntity> {
         return episodesDao.episode(episodeUri)
     }
 
@@ -39,16 +39,18 @@ class EpisodeStore(
     fun episodesInPodcast(
         podcastUri: String,
         limit: Int = Integer.MAX_VALUE
-    ): Flow<List<Episode>> {
+    ): Flow<List<EpisodeEntity>> {
         return episodesDao.episodesForPodcastUri(podcastUri, limit)
     }
 
     /**
-     * Add a new [Episode] to this store.
+     * Add a new [EpisodeEntity] to this store.
      *
      * This automatically switches to the main thread to maintain thread consistency.
      */
-    suspend fun addEpisodes(episodes: Collection<Episode>) = episodesDao.insertAll(episodes)
+    suspend fun addEpisodes(episodes: Collection<EpisodeEntity>) = episodesDao.insertAll(episodes)
 
     suspend fun isEmpty(): Boolean = episodesDao.count() == 0
+
+    suspend fun updateEpisode(episode: EpisodeEntity) = episodesDao.update(episode)
 }

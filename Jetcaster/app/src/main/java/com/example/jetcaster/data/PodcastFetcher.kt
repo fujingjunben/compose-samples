@@ -108,7 +108,7 @@ sealed class PodcastRssResponse {
 
     data class Success(
         val podcast: Podcast,
-        val episodes: List<Episode>,
+        val episodes: List<EpisodeEntity>,
         val categories: Set<Category>
     ) : PodcastRssResponse()
 }
@@ -138,11 +138,11 @@ private fun SyndFeed.toPodcastResponse(feedUrl: String): PodcastRssResponse {
 }
 
 /**
- * Map a Rome [SyndEntry] instance to our own [Episode] data class.
+ * Map a Rome [SyndEntry] instance to our own [EpisodeEntity] data class.
  */
-private fun SyndEntry.toEpisode(podcastUri: String): Episode {
+private fun SyndEntry.toEpisode(podcastUri: String): EpisodeEntity {
     val entryInformation = getModule(PodcastModuleDtd) as? EntryInformation
-    return Episode(
+    return EpisodeEntity(
         uri = if (enclosures.isEmpty()) "" else enclosures[0].url,
         podcastUri = podcastUri,
         title = title,

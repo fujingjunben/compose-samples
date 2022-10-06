@@ -20,7 +20,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.jetcaster.data.Category
-import com.example.jetcaster.data.Episode
+import com.example.jetcaster.data.EpisodeEntity
 import com.example.jetcaster.data.Podcast
 import com.example.jetcaster.data.PodcastCategoryEntry
 import com.example.jetcaster.data.PodcastFollowedEntry
@@ -31,7 +31,7 @@ import com.example.jetcaster.data.PodcastFollowedEntry
 @Database(
     entities = [
         Podcast::class,
-        Episode::class,
+        EpisodeEntity::class,
         PodcastCategoryEntry::class,
         Category::class,
         PodcastFollowedEntry::class

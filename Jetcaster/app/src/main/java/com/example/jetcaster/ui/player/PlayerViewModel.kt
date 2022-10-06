@@ -29,6 +29,8 @@ import androidx.savedstate.SavedStateRegistryOwner
 import com.example.jetcaster.Graph
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.PodcastStore
+import com.example.jetcaster.play.PlayReady
+import com.example.jetcaster.play.PlayState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -42,7 +44,9 @@ data class PlayerUiState(
     val summary: String = "",
     val podcastImageUrl: String = "",
     val url: String = "",
-    val isPlaying: Boolean = false
+    val isPlaying: Boolean = false,
+    val playState: PlayState = PlayReady,
+    val position: Long = 0L
 )
 
 /**
@@ -72,7 +76,8 @@ class PlayerViewModel(
                 podcastName = podcast.title,
                 summary = episode.summary ?: "",
                 podcastImageUrl = podcast.imageUrl ?: "",
-                url = episode.uri
+                url = episode.uri,
+                position = episode.position
             )
         }
     }

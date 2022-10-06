@@ -25,6 +25,8 @@ import com.example.jetcaster.data.PodcastsFetcher
 import com.example.jetcaster.data.PodcastsRepository
 import com.example.jetcaster.data.room.JetcasterDatabase
 import com.example.jetcaster.data.room.TransactionRunner
+import com.example.jetcaster.play.PlayerController
+import com.example.jetcaster.play.PlayerControllerImpl
 import com.rometools.rome.io.SyndFeedInput
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +50,8 @@ object Graph {
         get() = database.transactionRunnerDao()
 
     private val syndFeedInput by lazy { SyndFeedInput() }
+
+    lateinit var playerController: PlayerController
 
     val podcastRepository by lazy {
         PodcastsRepository(
@@ -110,5 +114,7 @@ object Graph {
             // showcase all of Room.
             .fallbackToDestructiveMigration()
             .build()
+
+        playerController = PlayerControllerImpl()
     }
 }

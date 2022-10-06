@@ -31,7 +31,9 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker.Companion.getOrCreate
+import com.example.jetcaster.Graph
 import com.example.jetcaster.play.PlaybackService
+import com.example.jetcaster.play.PlayerController
 import com.example.jetcaster.ui.player.PlayerUiState
 import com.example.jetcaster.ui.theme.JetcasterTheme
 import com.example.jetcaster.util.DevicePosture
@@ -45,9 +47,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class MainActivity : ComponentActivity() {
-    private lateinit var controllerFuture: ListenableFuture<MediaController>
-    private val controller: MediaController?
-        get() = if (controllerFuture.isDone) controllerFuture.get() else null
+    private val controller: PlayerController?
+        get() = Graph.playerController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,71 +85,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             JetcasterTheme {
-                JetcasterApp(devicePosture, play = { state ->  play(state)})
+                JetcasterApp(devicePosture, controller!!)
             }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        initializeController()
+        controller?.init(this)
     }
 
     /* Overrides onStop from Fragment */
     override fun onStop() {
         super.onStop()
-        // release MediaController - cut connection to PlayerService
-        releaseController()
+        controller?.release()
     }
-
-    /* Initializes the MediaController - handles connection to PlayerService under the hood */
-    private fun initializeController() {
-        controllerFuture = MediaController.Builder(this, SessionToken(this, ComponentName(this, PlaybackService::class.java))).buildAsync()
-        controllerFuture.addListener({ setupController() }, MoreExecutors.directExecutor())
-    }
-
-
-    /* Releases MediaController */
-    private fun releaseController() {
-        MediaController.releaseFuture(controllerFuture)
-    }
-
-
-    /* Sets up the MediaController  */
-    private fun setupController() {
-    }
-
-    private fun play(state: PlayerUiState): Boolean {
-        if (state.isPlaying) {
-            controller?.pause()
-        } else {
-            controller?.setMediaItem(buildMediaItem(state))
-            controller?.prepare()
-            controller?.play()
-        }
-        return true
-    }
-
-
-    private fun buildMediaItem(state: PlayerUiState): MediaItem {
-        // get the correct source for streaming / local playback
-        // put uri in RequestMetadata - credit: https://stackoverflow.com/a/70103460
-        val source = state.url
-        val requestMetadata = MediaItem.RequestMetadata.Builder().apply {
-            setMediaUri(source.toUri())
-        }.build()
-        // build MediaItem and return it
-        val mediaMetadata = MediaMetadata.Builder().apply {
-            setAlbumTitle(state.podcastName)
-            setTitle(state.title)
-            setArtworkUri(state.podcastImageUrl.toUri())
-        }.build()
-        return MediaItem.Builder().apply {
-            setRequestMetadata(requestMetadata)
-            setMediaMetadata(mediaMetadata)
-            setUri(source.toUri())
-        }.build()
-    }
-
-
 }

@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.jetcaster.R
+import com.example.jetcaster.play.PlayerController
 import com.example.jetcaster.ui.home.Home
 import com.example.jetcaster.ui.player.PlayerScreen
 import com.example.jetcaster.ui.player.PlayerUiState
@@ -35,7 +36,7 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun JetcasterApp(
     devicePosture: StateFlow<DevicePosture>,
-    play: (state: PlayerUiState) -> Boolean,
+    playerController: PlayerController,
     appState: JetcasterAppState = rememberJetcasterAppState()
 ) {
     if (appState.isOnline) {
@@ -57,7 +58,7 @@ fun JetcasterApp(
                         defaultArgs = backStackEntry.arguments
                     )
                 )
-                PlayerScreen(playerViewModel, devicePosture, onBackPress = appState::navigateBack, play)
+                PlayerScreen(playerViewModel, devicePosture, onBackPress = appState::navigateBack, playerController)
             }
         }
     } else {
