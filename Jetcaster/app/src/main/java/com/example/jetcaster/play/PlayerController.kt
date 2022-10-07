@@ -11,5 +11,8 @@ abstract class PlayerController {
 
     abstract fun init(context: Context)
     abstract fun release()
-    abstract fun play(uiState: PlayerUiState): PlayState
+    abstract fun play(uiState: PlayerUiState): PlayerState
+    open fun isPlaying(url: String) : Boolean {
+        return false
+    }
 }

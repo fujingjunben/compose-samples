@@ -29,8 +29,8 @@ import androidx.savedstate.SavedStateRegistryOwner
 import com.example.jetcaster.Graph
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.PodcastStore
-import com.example.jetcaster.play.PlayReady
-import com.example.jetcaster.play.PlayState
+import com.example.jetcaster.play.PlayerReady
+import com.example.jetcaster.play.PlayerState
 import com.example.jetcaster.play.PlayerController
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -45,7 +45,7 @@ data class PlayerUiState(
     val summary: String = "",
     val podcastImageUrl: String = "",
     val url: String = "",
-    val playState: PlayState = PlayReady,
+    val playState: PlayerState = PlayerReady,
     val playbackPosition: Long = 0L,
     val isPlaying: Boolean = false
 )
@@ -67,7 +67,7 @@ class PlayerViewModel(
     var uiState by mutableStateOf(PlayerUiState())
         private set
 
-    var paybackPosition by mutableStateOf(uiState.playbackPosition)
+    var paybackPosition by mutableStateOf(playerController.playbackPosition)
 
     init {
         viewModelScope.launch {
@@ -82,12 +82,13 @@ class PlayerViewModel(
                 podcastImageUrl = podcast.imageUrl ?: "",
                 url = episode.uri,
                 playbackPosition = episode.playbackPosition,
-                isPlaying = episode.isPlaying
+                isPlaying = playerController.isPlaying(episode.uri)
             )
+//            paybackPosition = episode.playbackPosition
         }
     }
 
-    fun play(playState: PlayState): PlayState {
+    fun play(playState: PlayerState): PlayerState {
         return playerController.play(uiState.copy(playState = playState))
     }
 

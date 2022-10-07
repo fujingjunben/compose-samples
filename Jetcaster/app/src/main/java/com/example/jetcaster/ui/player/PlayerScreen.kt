@@ -56,7 +56,6 @@ import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PauseCircleFilled
 import androidx.compose.material.icons.rounded.PlayCircleFilled
 import androidx.compose.runtime.*
@@ -89,7 +88,6 @@ import com.example.jetcaster.util.contrastAgainst
 import com.example.jetcaster.util.rememberDominantColorState
 import com.example.jetcaster.util.verticalGradientScrim
 import kotlinx.coroutines.flow.StateFlow
-import java.time.Duration
 
 /**
  * Stateful version of the Podcast player
@@ -114,7 +112,7 @@ private fun PlayerScreen(
     uiState: PlayerUiState,
     devicePosture: DevicePosture,
     onBackPress: () -> Unit,
-    play: (playState: PlayState) -> PlayState,
+    play: (playState: PlayerState) -> PlayerState,
     paybackPositionState: Long,
     modifier: Modifier = Modifier
 ) {
@@ -132,7 +130,7 @@ fun PlayerContent(
     uiState: PlayerUiState,
     devicePosture: DevicePosture,
     onBackPress: () -> Unit,
-    play: (playState: PlayState) -> PlayState,
+    play: (playState: PlayerState) -> PlayerState,
     playbackPositionState: Long
 ) {
     PlayerDynamicTheme(uiState.podcastImageUrl) {
@@ -172,7 +170,7 @@ fun PlayerContent(
 private fun PlayerContentRegular(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
-    play: (playState: PlayState) -> PlayState,
+    play: (playState: PlayerState) -> PlayerState,
     playbackPositionState: Long
 ) {
     Column(
@@ -205,7 +203,7 @@ private fun PlayerContentRegular(
             ) {
                 PlayerSlider(uiState, play, playbackPositionState)
                 PlayerButtons(Modifier.padding(vertical = 8.dp),
-                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayReady,
+                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady,
                     play = play)
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -218,7 +216,7 @@ private fun PlayerContentTableTop(
     uiState: PlayerUiState,
     tableTopPosture: DevicePosture.TableTopPosture,
     onBackPress: () -> Unit,
-    play: (playState: PlayState) -> PlayState,
+    play: (playState: PlayerState) -> PlayerState,
     playbackPositionState: Long
 ) {
     val hingePosition = with(LocalDensity.current) { tableTopPosture.hingePosition.top.toDp() }
@@ -271,7 +269,7 @@ private fun PlayerContentTableTop(
             ) {
                 PlayerButtons(
                     playerButtonSize = 92.dp, modifier = Modifier.padding(top = 8.dp),
-                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayReady,
+                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady,
                     play = play)
                 PlayerSlider(uiState, play, playbackPositionState)
             }
@@ -284,7 +282,7 @@ private fun PlayerContentBook(
     uiState: PlayerUiState,
     bookPosture: DevicePosture.BookPosture,
     onBackPress: () -> Unit,
-    play: (playState: PlayState) -> PlayState,
+    play: (playState: PlayerState) -> PlayerState,
     playbackPositionState: Long
 ) {
     val hingePosition = with(LocalDensity.current) { bookPosture.hingePosition.left.toDp() }
@@ -344,7 +342,7 @@ private fun PlayerContentBookLeft(
 private fun PlayerContentBookRight(
     uiState: PlayerUiState,
     playbackPositionState: Long,
-    play: (playState: PlayState) -> PlayState,
+    play: (playState: PlayerState) -> PlayerState,
 ) {
     Column(
         modifier = Modifier
@@ -366,7 +364,7 @@ private fun PlayerContentBookRight(
         ) {
             PlayerSlider(uiState, play, playbackPositionState)
             PlayerButtons(Modifier.padding(vertical = 8.dp),
-                playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayReady,
+                playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady,
                 play = play)
         }
         Spacer(modifier = Modifier.weight(1f))
@@ -476,7 +474,7 @@ private fun PodcastInformation(
 
 @Composable
 private fun PlayerSlider(uiState: PlayerUiState,
-                         play: (playState: PlayState) -> PlayState,
+                         play: (playState: PlayerState) -> PlayerState,
                          playbackPosition: Long,
                          ) {
     val episodeDuration = uiState.duration
@@ -491,7 +489,7 @@ private fun PlayerSlider(uiState: PlayerUiState,
                     position = it
                 },
                 onValueChangeFinished = {
-                    play(PlaySeek((position * episodeDuration.seconds * 1000).toLong()))
+                    play(PlayerSeek((position * episodeDuration.seconds * 1000).toLong()))
                 }
             )
 
@@ -511,8 +509,8 @@ private fun PlayerButtons(
     modifier: Modifier = Modifier,
     playerButtonSize: Dp = 72.dp,
     sideButtonSize: Dp = 48.dp,
-    playState: PlayState,
-    play: (playState: PlayState) -> PlayState,
+    playState: PlayerState,
+    play: (playerState: PlayerState) -> PlayerState,
     ) {
 
     var icon by remember {
@@ -525,9 +523,9 @@ private fun PlayerButtons(
 
 
     icon = when (state) {
-        is PlayReady -> Icons.Rounded.PlayCircleFilled
+        is PlayerReady -> Icons.Rounded.PlayCircleFilled
         is Playing -> Icons.Rounded.PauseCircleFilled
-        is PlayPause -> Icons.Rounded.PlayCircleFilled
+        is PlayerPause -> Icons.Rounded.PlayCircleFilled
         else -> Icons.Rounded.PlayCircleFilled
     }
 
