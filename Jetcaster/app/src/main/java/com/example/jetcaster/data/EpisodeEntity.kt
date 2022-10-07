@@ -51,5 +51,6 @@ data class EpisodeEntity(
     @ColumnInfo(name = "author") val author: String? = null,
     @ColumnInfo(name = "published") val published: OffsetDateTime,
     @ColumnInfo(name = "duration") val duration: Duration? = null,
-    @ColumnInfo(name = "position") val position: Long = 0L
+    @ColumnInfo(name = "playback_position") val playbackPosition: Long = 0L,
+    @ColumnInfo(name = "is_playing") val isPlaying: Boolean = false
 )

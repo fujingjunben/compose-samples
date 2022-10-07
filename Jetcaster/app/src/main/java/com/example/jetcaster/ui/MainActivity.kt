@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             JetcasterTheme {
-                JetcasterApp(devicePosture, controller!!)
+                JetcasterApp(devicePosture)
             }
         }
     }

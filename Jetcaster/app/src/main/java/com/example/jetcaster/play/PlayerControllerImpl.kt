@@ -4,6 +4,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
@@ -12,6 +15,9 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.jetcaster.Graph
+import com.example.jetcaster.data.extension.continuePlayback
+import com.example.jetcaster.data.extension.getCurrentMediaId
+import com.example.jetcaster.data.extension.hasMediaItems
 import com.example.jetcaster.ui.player.PlayerUiState
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -21,7 +27,7 @@ import java.lang.Runnable
 
 class PlayerControllerImpl(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-) : PlayerController {
+) : PlayerController() {
     private lateinit var controllerFuture: ListenableFuture<MediaController>
     private val controller: MediaController?
         get() = if (controllerFuture.isDone) controllerFuture.get() else null
@@ -32,11 +38,7 @@ class PlayerControllerImpl(
 
     private var uiState: PlayerUiState? = null
 
-    private var playbackPosition: Long = 0L
-
-    override fun getPlaybackPosition(): Long {
-        return playbackPosition
-    }
+    private var currentPlayMediaItemId = ""
 
     override fun init(context: Context) {
         initializeController(context)
@@ -47,33 +49,44 @@ class PlayerControllerImpl(
     }
 
     override fun play(uiState: PlayerUiState): PlayState {
+        println("uiState: $uiState")
         this.uiState = uiState
         return when (uiState.playState) {
             is PlayReady -> {
+                if (currentPlayMediaItemId.isNotEmpty() && uiState.url != currentPlayMediaItemId) {
+                    updateEpisode(currentPlayMediaItemId, playbackPosition, false)
+                    playbackPosition = 0L
+                    currentPlayMediaItemId = uiState.url
+                }
                 controller?.setMediaItem(buildMediaItem(uiState))
                 controller?.prepare()
                 controller?.play()
-                Playing(0L)
+                Playing(playbackPosition)
             }
             is Playing -> {
                 controller?.pause()
                 PlayPause(playbackPosition)
             }
             is PlayPause -> {
-                controller?.play()
+                controller?.continuePlayback()
                 Playing(playbackPosition)
             }
             is PlaySeek -> {
-                controller?.seekTo((uiState.playState.position * uiState.duration!!.seconds).toLong())
                 playbackPosition = uiState.playState.position
-                Playing(uiState.playState.position)
+                println("playbackPosition: $playbackPosition")
+                controller?.seekTo(playbackPosition)
+
+                if (controller!!.isPlaying) {
+                    Playing(playbackPosition)
+                } else {
+                    PlayPause(playbackPosition)
+                }
             }
             is PlayError -> {
                 PlayError
             }
         }
     }
-
 
 
     /* Initializes the MediaController - handles connection to PlayerService under the hood */
@@ -93,7 +106,7 @@ class PlayerControllerImpl(
         val controller: MediaController = this.controller ?: return
 
         // update playback progress state
-        togglePeriodicProgressUpdateRequest()
+//        togglePeriodicProgressUpdateRequest()
 
         controller.addListener(playerListener)
     }
@@ -114,6 +127,7 @@ class PlayerControllerImpl(
 
     /* Releases MediaController */
     private fun releaseController() {
+        updateEpisode(currentPlayMediaItemId, playbackPosition, false)
         MediaController.releaseFuture(controllerFuture)
     }
 
@@ -131,6 +145,7 @@ class PlayerControllerImpl(
             setArtworkUri(state.podcastImageUrl.toUri())
         }.build()
         return MediaItem.Builder().apply {
+            setMediaId(state.url)
             setRequestMetadata(requestMetadata)
             setMediaMetadata(mediaMetadata)
             setUri(source.toUri())
@@ -146,7 +161,7 @@ class PlayerControllerImpl(
             // update progress bar
             updateProgressBar()
             // use the handler to start runnable again after specified delay
-            handler.postDelayed(this, 500)
+            handler.postDelayed(this, 1000)
         }
     }
     /*
@@ -159,11 +174,11 @@ class PlayerControllerImpl(
         val position = controller?.currentPosition ?: 0L
         playbackPosition = position
         if (this.uiState != null) {
-            val url = this.uiState!!.url
-            scope.launch {
-                val episode = episodeStore.episodeWithUri(url).first()
-                episodeStore.updateEpisode(episode.copy(position = playbackPosition))
-
+            if (controller!!.hasMediaItems()) {
+                val url = this.uiState!!.url
+                scope.launch {
+                    updateEpisode(url, playbackPosition, true)
+                }
             }
         }
     }
@@ -180,7 +195,20 @@ class PlayerControllerImpl(
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
+            println("onIsPlayingChanged: $isPlaying")
             togglePeriodicProgressUpdateRequest()
+        }
+    }
+
+    private fun updateEpisode(url: String, position: Long, isPlaying: Boolean = false) {
+        scope.launch {
+            val episode = episodeStore.episodeWithUri(url).first()
+            episodeStore.updateEpisode(
+                episode.copy(
+                    playbackPosition = position,
+                    isPlaying = isPlaying
+                )
+            )
         }
     }
 }

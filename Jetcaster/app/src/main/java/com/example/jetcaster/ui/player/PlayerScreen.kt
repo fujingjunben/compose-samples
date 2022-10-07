@@ -98,12 +98,12 @@ import java.time.Duration
 fun PlayerScreen(
     viewModel: PlayerViewModel,
     devicePosture: StateFlow<DevicePosture>,
-    onBackPress: () -> Unit,
-    player: PlayerController
+    onBackPress: () -> Unit
 ) {
     val uiState = viewModel.uiState
+    val paybackPositionState = viewModel.paybackPosition
     val devicePostureValue by devicePosture.collectAsState()
-    PlayerScreen(uiState, devicePostureValue, onBackPress, player)
+    PlayerScreen(uiState, devicePostureValue, onBackPress, viewModel::play, paybackPositionState)
 }
 
 /**
@@ -114,12 +114,13 @@ private fun PlayerScreen(
     uiState: PlayerUiState,
     devicePosture: DevicePosture,
     onBackPress: () -> Unit,
-    player: PlayerController,
+    play: (playState: PlayState) -> PlayState,
+    paybackPositionState: Long,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier) {
         if (uiState.podcastName.isNotEmpty()) {
-            PlayerContent(uiState, devicePosture, onBackPress, player)
+            PlayerContent(uiState, devicePosture, onBackPress, play, paybackPositionState)
         } else {
             FullScreenLoading(modifier)
         }
@@ -131,7 +132,8 @@ fun PlayerContent(
     uiState: PlayerUiState,
     devicePosture: DevicePosture,
     onBackPress: () -> Unit,
-    player: PlayerController
+    play: (playState: PlayState) -> PlayState,
+    playbackPositionState: Long
 ) {
     PlayerDynamicTheme(uiState.podcastImageUrl) {
         // As the Player UI content changes considerably when the device is in tabletop posture,
@@ -139,27 +141,29 @@ fun PlayerContent(
         // much, prefer one composable that makes decisions based on the mode instead.
         when (devicePosture) {
             is DevicePosture.TableTopPosture ->
-                PlayerContentTableTop(uiState, devicePosture, onBackPress, player)
+                PlayerContentTableTop(uiState, devicePosture, onBackPress, play, playbackPositionState)
             is DevicePosture.BookPosture ->
-                PlayerContentBook(uiState, devicePosture, onBackPress, player)
+                PlayerContentBook(uiState, devicePosture, onBackPress, play, playbackPositionState)
             is DevicePosture.SeparatingPosture ->
                 if (devicePosture.orientation == FoldingFeature.Orientation.HORIZONTAL) {
                     PlayerContentTableTop(
                         uiState,
                         DevicePosture.TableTopPosture(devicePosture.hingePosition),
                         onBackPress,
-                        player
+                        play,
+                        playbackPositionState
                     )
                 } else {
                     PlayerContentBook(
                         uiState,
                         DevicePosture.BookPosture(devicePosture.hingePosition),
                         onBackPress,
-                        player
+                        play,
+                        playbackPositionState
                     )
                 }
             else ->
-                PlayerContentRegular(uiState, onBackPress, player)
+                PlayerContentRegular(uiState, onBackPress, play, playbackPositionState)
         }
     }
 }
@@ -168,7 +172,8 @@ fun PlayerContent(
 private fun PlayerContentRegular(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
-    player: PlayerController
+    play: (playState: PlayState) -> PlayState,
+    playbackPositionState: Long
 ) {
     Column(
         modifier = Modifier
@@ -198,8 +203,10 @@ private fun PlayerContentRegular(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(10f)
             ) {
-                PlayerSlider(uiState, player)
-                PlayerButtons(Modifier.padding(vertical = 8.dp), uiState = uiState, player = player)
+                PlayerSlider(uiState, play, playbackPositionState)
+                PlayerButtons(Modifier.padding(vertical = 8.dp),
+                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayReady,
+                    play = play)
             }
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -211,7 +218,8 @@ private fun PlayerContentTableTop(
     uiState: PlayerUiState,
     tableTopPosture: DevicePosture.TableTopPosture,
     onBackPress: () -> Unit,
-    player: PlayerController
+    play: (playState: PlayState) -> PlayState,
+    playbackPositionState: Long
 ) {
     val hingePosition = with(LocalDensity.current) { tableTopPosture.hingePosition.top.toDp() }
     val hingeHeight = with(LocalDensity.current) { tableTopPosture.hingePosition.height().toDp() }
@@ -263,9 +271,9 @@ private fun PlayerContentTableTop(
             ) {
                 PlayerButtons(
                     playerButtonSize = 92.dp, modifier = Modifier.padding(top = 8.dp),
-                    uiState = uiState, player = player
-                )
-                PlayerSlider(uiState, player = player)
+                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayReady,
+                    play = play)
+                PlayerSlider(uiState, play, playbackPositionState)
             }
         }
     }
@@ -276,7 +284,8 @@ private fun PlayerContentBook(
     uiState: PlayerUiState,
     bookPosture: DevicePosture.BookPosture,
     onBackPress: () -> Unit,
-    player: PlayerController
+    play: (playState: PlayState) -> PlayState,
+    playbackPositionState: Long
 ) {
     val hingePosition = with(LocalDensity.current) { bookPosture.hingePosition.left.toDp() }
     val hingeWidth = with(LocalDensity.current) { bookPosture.hingePosition.width().toDp() }
@@ -300,7 +309,7 @@ private fun PlayerContentBook(
             // Space for the hinge
             Spacer(modifier = Modifier.width(hingeWidth))
             // Content for the right part of the screen
-            PlayerContentBookRight(uiState, player)
+            PlayerContentBookRight(uiState, playbackPositionState, play)
         }
     }
 }
@@ -334,7 +343,8 @@ private fun PlayerContentBookLeft(
 @Composable
 private fun PlayerContentBookRight(
     uiState: PlayerUiState,
-    player: PlayerController
+    playbackPositionState: Long,
+    play: (playState: PlayState) -> PlayState,
 ) {
     Column(
         modifier = Modifier
@@ -354,8 +364,10 @@ private fun PlayerContentBookRight(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.weight(10f)
         ) {
-            PlayerSlider(uiState, player)
-            PlayerButtons(Modifier.padding(vertical = 8.dp), uiState = uiState, player = player)
+            PlayerSlider(uiState, play, playbackPositionState)
+            PlayerButtons(Modifier.padding(vertical = 8.dp),
+                playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayReady,
+                play = play)
         }
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -463,21 +475,29 @@ private fun PodcastInformation(
 }
 
 @Composable
-private fun PlayerSlider(uiState: PlayerUiState, player: PlayerController) {
+private fun PlayerSlider(uiState: PlayerUiState,
+                         play: (playState: PlayState) -> PlayState,
+                         playbackPosition: Long,
+                         ) {
     val episodeDuration = uiState.duration
+
     if (episodeDuration != null) {
-        val position = player.getPlaybackPosition() * 1.0f / episodeDuration.seconds
+        var position by remember(playbackPosition) {
+            mutableStateOf(playbackPosition * 1f / episodeDuration.seconds / 1000)
+        }
         Column(Modifier.fillMaxWidth()) {
             Slider(value = position,
                 onValueChange = {
-                    player.play(
-                        uiState.copy(
-                            playState = PlaySeek((it * episodeDuration.seconds).toLong())
-                        )
-                    )
-                })
+                    position = it
+                },
+                onValueChangeFinished = {
+                    play(PlaySeek((position * episodeDuration.seconds * 1000).toLong()))
+                }
+            )
+
+
             Row(Modifier.fillMaxWidth()) {
-                Text(text = "0s")
+                Text(text = "${position * episodeDuration.seconds}s")
                 Spacer(modifier = Modifier.weight(1f))
                 Text("${episodeDuration.seconds}")
 //                Text("${episodeDuration.toMinutesPart()}: ${episodeDuration.toSecondsPart()}")
@@ -491,12 +511,24 @@ private fun PlayerButtons(
     modifier: Modifier = Modifier,
     playerButtonSize: Dp = 72.dp,
     sideButtonSize: Dp = 48.dp,
-    uiState: PlayerUiState,
-    player: PlayerController
-) {
+    playState: PlayState,
+    play: (playState: PlayState) -> PlayState,
+    ) {
 
     var icon by remember {
         mutableStateOf(Icons.Rounded.PlayCircleFilled)
+    }
+
+    var state by remember {
+        mutableStateOf(playState)
+    }
+
+
+    icon = when (state) {
+        is PlayReady -> Icons.Rounded.PlayCircleFilled
+        is Playing -> Icons.Rounded.PauseCircleFilled
+        is PlayPause -> Icons.Rounded.PlayCircleFilled
+        else -> Icons.Rounded.PlayCircleFilled
     }
 
     Row(
@@ -531,14 +563,8 @@ private fun PlayerButtons(
                 .size(playerButtonSize)
                 .semantics { role = Role.Button }
                 .clickable {
-                    val state = player.play(uiState)
+                    state = play(state)
 
-                    icon = when (state) {
-                        is PlayReady -> Icons.Rounded.PlayCircleFilled
-                        is Playing -> Icons.Rounded.PlayCircleFilled
-                        is PlayPause -> Icons.Rounded.PlayCircleFilled
-                        else -> Icons.Rounded.PlayCircleFilled
-                    }
                 }
         )
         Image(

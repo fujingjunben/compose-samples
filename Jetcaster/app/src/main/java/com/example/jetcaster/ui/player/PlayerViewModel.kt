@@ -31,6 +31,7 @@ import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.PodcastStore
 import com.example.jetcaster.play.PlayReady
 import com.example.jetcaster.play.PlayState
+import com.example.jetcaster.play.PlayerController
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -44,9 +45,9 @@ data class PlayerUiState(
     val summary: String = "",
     val podcastImageUrl: String = "",
     val url: String = "",
-    val isPlaying: Boolean = false,
     val playState: PlayState = PlayReady,
-    val position: Long = 0L
+    val playbackPosition: Long = 0L,
+    val isPlaying: Boolean = false
 )
 
 /**
@@ -55,7 +56,8 @@ data class PlayerUiState(
 class PlayerViewModel(
     episodeStore: EpisodeStore,
     podcastStore: PodcastStore,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val playerController: PlayerController
 ) : ViewModel() {
 
     // episodeUri should always be present in the PlayerViewModel.
@@ -64,6 +66,8 @@ class PlayerViewModel(
 
     var uiState by mutableStateOf(PlayerUiState())
         private set
+
+    var paybackPosition by mutableStateOf(uiState.playbackPosition)
 
     init {
         viewModelScope.launch {
@@ -77,10 +81,16 @@ class PlayerViewModel(
                 summary = episode.summary ?: "",
                 podcastImageUrl = podcast.imageUrl ?: "",
                 url = episode.uri,
-                position = episode.position
+                playbackPosition = episode.playbackPosition,
+                isPlaying = episode.isPlaying
             )
         }
     }
+
+    fun play(playState: PlayState): PlayState {
+        return playerController.play(uiState.copy(playState = playState))
+    }
+
 
     /**
      * Factory for PlayerViewModel that takes EpisodeStore and PodcastStore as a dependency
@@ -89,6 +99,7 @@ class PlayerViewModel(
         fun provideFactory(
             episodeStore: EpisodeStore = Graph.episodeStore,
             podcastStore: PodcastStore = Graph.podcastStore,
+            playerController: PlayerController = Graph.playerController,
             owner: SavedStateRegistryOwner,
             defaultArgs: Bundle? = null,
         ): AbstractSavedStateViewModelFactory =
@@ -99,7 +110,7 @@ class PlayerViewModel(
                     modelClass: Class<T>,
                     handle: SavedStateHandle
                 ): T {
-                    return PlayerViewModel(episodeStore, podcastStore, handle) as T
+                    return PlayerViewModel(episodeStore, podcastStore, handle, playerController) as T
                 }
             }
     }

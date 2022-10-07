@@ -36,7 +36,6 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun JetcasterApp(
     devicePosture: StateFlow<DevicePosture>,
-    playerController: PlayerController,
     appState: JetcasterAppState = rememberJetcasterAppState()
 ) {
     if (appState.isOnline) {
@@ -58,7 +57,7 @@ fun JetcasterApp(
                         defaultArgs = backStackEntry.arguments
                     )
                 )
-                PlayerScreen(playerViewModel, devicePosture, onBackPress = appState::navigateBack, playerController)
+                PlayerScreen(playerViewModel, devicePosture, onBackPress = appState::navigateBack)
             }
         }
     } else {
