@@ -32,6 +32,7 @@ import com.example.jetcaster.data.PodcastStore
 import com.example.jetcaster.play.PlayerReady
 import com.example.jetcaster.play.PlayerState
 import com.example.jetcaster.play.PlayerController
+import com.example.jetcaster.play.Playing
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -45,8 +46,7 @@ data class PlayerUiState(
     val summary: String = "",
     val podcastImageUrl: String = "",
     val url: String = "",
-    val playState: PlayerState = PlayerReady,
-    val playbackPosition: Long = 0L,
+    val playState: PlayerState = PlayerReady(0L),
     val isPlaying: Boolean = false
 )
 
@@ -58,7 +58,7 @@ class PlayerViewModel(
     podcastStore: PodcastStore,
     savedStateHandle: SavedStateHandle,
     private val playerController: PlayerController
-) : ViewModel() {
+) : ViewModel(), PlaybackPositionListener {
 
     // episodeUri should always be present in the PlayerViewModel.
     // If that's not the case, fail crashing the app!
@@ -67,7 +67,8 @@ class PlayerViewModel(
     var uiState by mutableStateOf(PlayerUiState())
         private set
 
-    var paybackPosition by mutableStateOf(playerController.playbackPosition)
+    var playbackPosition by mutableStateOf(0L)
+        private set
 
     init {
         viewModelScope.launch {
@@ -81,17 +82,26 @@ class PlayerViewModel(
                 summary = episode.summary ?: "",
                 podcastImageUrl = podcast.imageUrl ?: "",
                 url = episode.uri,
-                playbackPosition = episode.playbackPosition,
                 isPlaying = playerController.isPlaying(episode.uri)
             )
-//            paybackPosition = episode.playbackPosition
+            playbackPosition = episode.playbackPosition
+        }
+
+        if (uiState.isPlaying) {
+            playerController.bind(this)
         }
     }
 
     fun play(playState: PlayerState): PlayerState {
+        if (!uiState.isPlaying && playState is PlayerReady) {
+            playerController.bind(this)
+        }
         return playerController.play(uiState.copy(playState = playState))
     }
 
+    override fun onChange(position: Long) {
+        playbackPosition = position
+    }
 
     /**
      * Factory for PlayerViewModel that takes EpisodeStore and PodcastStore as a dependency
@@ -111,8 +121,18 @@ class PlayerViewModel(
                     modelClass: Class<T>,
                     handle: SavedStateHandle
                 ): T {
-                    return PlayerViewModel(episodeStore, podcastStore, handle, playerController) as T
+                    return PlayerViewModel(
+                        episodeStore,
+                        podcastStore,
+                        handle,
+                        playerController
+                    ) as T
                 }
             }
     }
+
+}
+
+interface PlaybackPositionListener {
+    fun onChange(position: Long)
 }

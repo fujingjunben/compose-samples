@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import androidx.compose.runtime.MutableState
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -13,6 +14,8 @@ import androidx.media3.session.SessionToken
 import com.example.jetcaster.Graph
 import com.example.jetcaster.data.extension.continuePlayback
 import com.example.jetcaster.data.extension.hasMediaItems
+import com.example.jetcaster.data.extension.play
+import com.example.jetcaster.ui.player.PlaybackPositionListener
 import com.example.jetcaster.ui.player.PlayerUiState
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -57,35 +60,40 @@ class PlayerControllerImpl(
                     updateEpisode(playState.copy(isPlaying = false))
                 }
                 playState = playState.copy(currentMediaId = uiState.url, isPlaying = true)
-                controller?.setMediaItem(buildMediaItem(uiState))
-                controller?.prepare()
-                controller?.play()
-                Playing(playbackPosition)
+                if (uiState.playState.position > 0L) {
+                    controller?.seekTo(uiState.playState.position)
+                }
+                controller?.play(uiState)
+                Playing(0L)
             }
             is Playing -> {
                 controller?.pause()
-                PlayerPause(playbackPosition)
+                PlayerPause(playState.playbackPosition)
             }
             is PlayerPause -> {
                 controller?.continuePlayback()
-                Playing(playbackPosition)
+                Playing(playState.playbackPosition)
             }
             is PlayerSeek -> {
-                playbackPosition = uiState.playState.position
-                println("playbackPosition: $playbackPosition")
-                controller?.seekTo(playbackPosition)
-                playState = playState.copy(playbackPosition = playbackPosition)
+                val position = uiState.playState.position
+                println("playbackPosition: $position")
+                controller?.seekTo(position)
 
                 if (controller!!.isPlaying) {
-                    Playing(playbackPosition)
+                    Playing(position)
                 } else {
-                    PlayerPause(playbackPosition)
+                    PlayerPause(position)
                 }
             }
             is PlayerError -> {
                 PlayerError
             }
         }
+    }
+
+    private var positionListener: PlaybackPositionListener? = null
+    override fun bind(listener: PlaybackPositionListener) {
+        this.positionListener = listener
     }
 
 
@@ -130,27 +138,6 @@ class PlayerControllerImpl(
         MediaController.releaseFuture(controllerFuture)
     }
 
-    private fun buildMediaItem(state: PlayerUiState): MediaItem {
-        // get the correct source for streaming / local playback
-        // put uri in RequestMetadata - credit: https://stackoverflow.com/a/70103460
-        val source = state.url
-        val requestMetadata = MediaItem.RequestMetadata.Builder().apply {
-            setMediaUri(source.toUri())
-        }.build()
-        // build MediaItem and return it
-        val mediaMetadata = MediaMetadata.Builder().apply {
-            setAlbumTitle(state.podcastName)
-            setTitle(state.title)
-            setArtworkUri(state.podcastImageUrl.toUri())
-        }.build()
-        return MediaItem.Builder().apply {
-            setMediaId(state.url)
-            setRequestMetadata(requestMetadata)
-            setMediaMetadata(mediaMetadata)
-            setUri(source.toUri())
-        }.build()
-    }
-
 
     /*
      * Runnable: Periodically requests playback position (and sleep timer if running)
@@ -172,7 +159,7 @@ class PlayerControllerImpl(
         // update progress bar - only if controller is prepared with a media item
         val position = controller?.currentPosition ?: 0L
         playState = playState.copy(playbackPosition = position)
-        playbackPosition = position
+        positionListener?.onChange(position)
         if (controller?.hasMediaItems() == true) {
             updateEpisode(playState)
         }
@@ -215,7 +202,7 @@ class PlayerControllerImpl(
         }
     }
 
-    private data class PlayState(
+    data class PlayState(
         val currentMediaId: String = "",
         val isPlaying: Boolean = false,
         val playbackPosition: Long = 0L

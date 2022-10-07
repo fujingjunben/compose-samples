@@ -24,11 +24,18 @@ import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.example.jetcaster.data.Episode
 import com.example.jetcaster.play.Keys
+import com.example.jetcaster.ui.player.PlayerUiState
 import com.google.common.util.concurrent.ListenableFuture
 
 
 private val TAG: String = "MediaControllerExt"
 
+
+fun MediaController.play(uiState: PlayerUiState) {
+    setMediaItem(buildMediaItem(uiState))
+    prepare()
+    play()
+}
 
 /* Continue playback */
 fun MediaController.continuePlayback() {
@@ -51,7 +58,10 @@ fun MediaController.cancelSleepTimer() {
 
 /* Request sleep timer remaining */
 fun MediaController.requestSleepTimerRemaining(): ListenableFuture<SessionResult> {
-    return sendCustomCommand(SessionCommand(Keys.CMD_REQUEST_SLEEP_TIMER_REMAINING, Bundle.EMPTY), Bundle.EMPTY)
+    return sendCustomCommand(
+        SessionCommand(Keys.CMD_REQUEST_SLEEP_TIMER_REMAINING, Bundle.EMPTY),
+        Bundle.EMPTY
+    )
 }
 
 
@@ -85,6 +95,27 @@ private fun buildMediaItem(episode: Episode, streaming: Boolean): MediaItem {
     }.build()
 }
 
+private fun buildMediaItem(state: PlayerUiState): MediaItem {
+    // get the correct source for streaming / local playback
+    // put uri in RequestMetadata - credit: https://stackoverflow.com/a/70103460
+    val source = state.url
+    val requestMetadata = MediaItem.RequestMetadata.Builder().apply {
+        setMediaUri(source.toUri())
+    }.build()
+    // build MediaItem and return it
+    val mediaMetadata = MediaMetadata.Builder().apply {
+        setAlbumTitle(state.podcastName)
+        setTitle(state.title)
+        setArtworkUri(state.podcastImageUrl.toUri())
+    }.build()
+    return MediaItem.Builder().apply {
+        setMediaId(state.url)
+        setRequestMetadata(requestMetadata)
+        setMediaMetadata(mediaMetadata)
+        setUri(source.toUri())
+    }.build()
+}
+
 /* Puts current episode into playlist */
 fun MediaController.setCurrentEpisode(episode: Episode?, streaming: Boolean) {
     if (episode != null) {
@@ -96,7 +127,10 @@ fun MediaController.setCurrentEpisode(episode: Episode?, streaming: Boolean) {
 
 /* Updates Up Next episode media id */
 fun MediaController.updateUpNextEpisode(upNextEpisodeMediaId: String) {
-    sendCustomCommand(SessionCommand(Keys.CMD_UPDATE_UP_NEXT_EPISODE, Bundle.EMPTY), bundleOf(Pair(Keys.EXTRA_UP_NEXT_EPISODE_MEDIA_ID, upNextEpisodeMediaId)))
+    sendCustomCommand(
+        SessionCommand(Keys.CMD_UPDATE_UP_NEXT_EPISODE, Bundle.EMPTY),
+        bundleOf(Pair(Keys.EXTRA_UP_NEXT_EPISODE_MEDIA_ID, upNextEpisodeMediaId))
+    )
 }
 
 

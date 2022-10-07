@@ -99,7 +99,7 @@ fun PlayerScreen(
     onBackPress: () -> Unit
 ) {
     val uiState = viewModel.uiState
-    val paybackPositionState = viewModel.paybackPosition
+    val paybackPositionState = viewModel.playbackPosition
     val devicePostureValue by devicePosture.collectAsState()
     PlayerScreen(uiState, devicePostureValue, onBackPress, viewModel::play, paybackPositionState)
 }
@@ -139,7 +139,13 @@ fun PlayerContent(
         // much, prefer one composable that makes decisions based on the mode instead.
         when (devicePosture) {
             is DevicePosture.TableTopPosture ->
-                PlayerContentTableTop(uiState, devicePosture, onBackPress, play, playbackPositionState)
+                PlayerContentTableTop(
+                    uiState,
+                    devicePosture,
+                    onBackPress,
+                    play,
+                    playbackPositionState
+                )
             is DevicePosture.BookPosture ->
                 PlayerContentBook(uiState, devicePosture, onBackPress, play, playbackPositionState)
             is DevicePosture.SeparatingPosture ->
@@ -202,9 +208,15 @@ private fun PlayerContentRegular(
                 modifier = Modifier.weight(10f)
             ) {
                 PlayerSlider(uiState, play, playbackPositionState)
-                PlayerButtons(Modifier.padding(vertical = 8.dp),
-                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady,
-                    play = play)
+                PlayerButtons(
+                    Modifier.padding(vertical = 8.dp),
+                    playState = if (uiState.isPlaying) {
+                        Playing(playbackPositionState)
+                    } else {
+                        PlayerReady(playbackPositionState)
+                    },
+                    play = play
+                )
             }
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -269,8 +281,9 @@ private fun PlayerContentTableTop(
             ) {
                 PlayerButtons(
                     playerButtonSize = 92.dp, modifier = Modifier.padding(top = 8.dp),
-                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady,
-                    play = play)
+                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady(playbackPositionState),
+                    play = play
+                )
                 PlayerSlider(uiState, play, playbackPositionState)
             }
         }
@@ -363,9 +376,11 @@ private fun PlayerContentBookRight(
             modifier = Modifier.weight(10f)
         ) {
             PlayerSlider(uiState, play, playbackPositionState)
-            PlayerButtons(Modifier.padding(vertical = 8.dp),
-                playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady,
-                play = play)
+            PlayerButtons(
+                Modifier.padding(vertical = 8.dp),
+                playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady(playbackPositionState),
+                play = play
+            )
         }
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -473,10 +488,11 @@ private fun PodcastInformation(
 }
 
 @Composable
-private fun PlayerSlider(uiState: PlayerUiState,
-                         play: (playState: PlayerState) -> PlayerState,
-                         playbackPosition: Long,
-                         ) {
+private fun PlayerSlider(
+    uiState: PlayerUiState,
+    play: (playState: PlayerState) -> PlayerState,
+    playbackPosition: Long,
+) {
     val episodeDuration = uiState.duration
 
     if (episodeDuration != null) {
@@ -511,7 +527,7 @@ private fun PlayerButtons(
     sideButtonSize: Dp = 48.dp,
     playState: PlayerState,
     play: (playerState: PlayerState) -> PlayerState,
-    ) {
+) {
 
     var icon by remember {
         mutableStateOf(Icons.Rounded.PlayCircleFilled)
