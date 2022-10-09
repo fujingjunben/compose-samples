@@ -36,6 +36,7 @@ import com.example.jetcaster.play.PlaybackService
 import com.example.jetcaster.play.PlayerController
 import com.example.jetcaster.ui.player.PlayerUiState
 import com.example.jetcaster.ui.theme.JetcasterTheme
+import com.example.jetcaster.ui.v2.PodcastApp
 import com.example.jetcaster.util.DevicePosture
 import com.example.jetcaster.util.isBookPosture
 import com.example.jetcaster.util.isSeparatingPosture
@@ -84,9 +85,7 @@ class MainActivity : ComponentActivity() {
             )
 
         setContent {
-            JetcasterTheme {
-                JetcasterApp(devicePosture)
-            }
+            PodcastApp()
         }
     }
 

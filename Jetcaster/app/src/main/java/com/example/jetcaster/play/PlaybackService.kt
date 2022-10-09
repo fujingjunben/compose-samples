@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class PlaybackService: MediaSessionService() {
-    public val URL = "MEDIA_URL";
     private var mediaSession: MediaSession? = null
     private lateinit var player: ExoPlayer
 
@@ -31,15 +30,6 @@ class PlaybackService: MediaSessionService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         return mediaSession
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent != null && intent.hasExtra(URL)) {
-            intent.getStringExtra(URL)?.let {
-                player.setMediaItem(MediaItem.fromUri(it))
-            }
-        }
-        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onDestroy() {

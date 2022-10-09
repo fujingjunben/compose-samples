@@ -54,5 +54,8 @@
     <string name="cd_follow">Follow</string>
     <string name="cd_following">Following</string>
     <string name="cd_not_following">Not following</string>
+    <string name="favourite">Favourite</string>
+    <string name="manage">Manage</string>
+    <string name="explore">Explore</string>
 
 </resources>

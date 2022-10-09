@@ -15,6 +15,7 @@ import com.example.jetcaster.Graph
 import com.example.jetcaster.data.extension.continuePlayback
 import com.example.jetcaster.data.extension.hasMediaItems
 import com.example.jetcaster.data.extension.play
+import com.example.jetcaster.data.extension.seekAndPlay
 import com.example.jetcaster.ui.player.PlaybackPositionListener
 import com.example.jetcaster.ui.player.PlayerUiState
 import com.google.common.util.concurrent.ListenableFuture
@@ -61,9 +62,8 @@ class PlayerControllerImpl(
                 }
                 playState = playState.copy(currentMediaId = uiState.url, isPlaying = true)
                 if (uiState.playState.position > 0L) {
-                    controller?.seekTo(uiState.playState.position)
+                    controller?.seekAndPlay(uiState, uiState.playState.position)
                 }
-                controller?.play(uiState)
                 Playing(0L)
             }
             is Playing -> {
@@ -75,11 +75,14 @@ class PlayerControllerImpl(
                 Playing(playState.playbackPosition)
             }
             is PlayerSeek -> {
+                val isPlaying = controller!!.isPlaying
+                controller?.pause()
                 val position = uiState.playState.position
                 println("playbackPosition: $position")
                 controller?.seekTo(position)
 
-                if (controller!!.isPlaying) {
+                if (isPlaying) {
+                    controller?.continuePlayback()
                     Playing(position)
                 } else {
                     PlayerPause(position)

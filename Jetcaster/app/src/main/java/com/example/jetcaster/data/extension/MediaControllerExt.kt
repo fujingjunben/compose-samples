@@ -37,6 +37,14 @@ fun MediaController.play(uiState: PlayerUiState) {
     play()
 }
 
+fun MediaController.seekAndPlay(uiState: PlayerUiState, position: Long) {
+    setMediaItem(buildMediaItem(uiState))
+    seekTo(position)
+    prepare()
+    playWhenReady = true
+}
+
+
 /* Continue playback */
 fun MediaController.continuePlayback() {
     // if episode is finished / almost finished (1/2 second before the end), then continue from start of episode

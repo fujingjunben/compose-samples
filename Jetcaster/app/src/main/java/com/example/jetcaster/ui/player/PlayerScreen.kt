@@ -82,11 +82,7 @@ import com.example.jetcaster.R
 import com.example.jetcaster.play.*
 import com.example.jetcaster.ui.theme.JetcasterTheme
 import com.example.jetcaster.ui.theme.MinContrastOfPrimaryVsSurface
-import com.example.jetcaster.util.DevicePosture
-import com.example.jetcaster.util.DynamicThemePrimaryColorsFromImage
-import com.example.jetcaster.util.contrastAgainst
-import com.example.jetcaster.util.rememberDominantColorState
-import com.example.jetcaster.util.verticalGradientScrim
+import com.example.jetcaster.util.*
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -95,13 +91,11 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel,
-    devicePosture: StateFlow<DevicePosture>,
     onBackPress: () -> Unit
 ) {
     val uiState = viewModel.uiState
     val paybackPositionState = viewModel.playbackPosition
-    val devicePostureValue by devicePosture.collectAsState()
-    PlayerScreen(uiState, devicePostureValue, onBackPress, viewModel::play, paybackPositionState)
+    PlayerScreen(uiState, onBackPress, viewModel::play, paybackPositionState)
 }
 
 /**
@@ -110,7 +104,6 @@ fun PlayerScreen(
 @Composable
 private fun PlayerScreen(
     uiState: PlayerUiState,
-    devicePosture: DevicePosture,
     onBackPress: () -> Unit,
     play: (playState: PlayerState) -> PlayerState,
     paybackPositionState: Long,
@@ -118,7 +111,7 @@ private fun PlayerScreen(
 ) {
     Surface(modifier) {
         if (uiState.podcastName.isNotEmpty()) {
-            PlayerContent(uiState, devicePosture, onBackPress, play, paybackPositionState)
+            PlayerContent(uiState, onBackPress, play, paybackPositionState)
         } else {
             FullScreenLoading(modifier)
         }
@@ -128,47 +121,12 @@ private fun PlayerScreen(
 @Composable
 fun PlayerContent(
     uiState: PlayerUiState,
-    devicePosture: DevicePosture,
     onBackPress: () -> Unit,
     play: (playState: PlayerState) -> PlayerState,
     playbackPositionState: Long
 ) {
     PlayerDynamicTheme(uiState.podcastImageUrl) {
-        // As the Player UI content changes considerably when the device is in tabletop posture,
-        // we split the different UIs in different composables. For simpler UIs that don't change
-        // much, prefer one composable that makes decisions based on the mode instead.
-        when (devicePosture) {
-            is DevicePosture.TableTopPosture ->
-                PlayerContentTableTop(
-                    uiState,
-                    devicePosture,
-                    onBackPress,
-                    play,
-                    playbackPositionState
-                )
-            is DevicePosture.BookPosture ->
-                PlayerContentBook(uiState, devicePosture, onBackPress, play, playbackPositionState)
-            is DevicePosture.SeparatingPosture ->
-                if (devicePosture.orientation == FoldingFeature.Orientation.HORIZONTAL) {
-                    PlayerContentTableTop(
-                        uiState,
-                        DevicePosture.TableTopPosture(devicePosture.hingePosition),
-                        onBackPress,
-                        play,
-                        playbackPositionState
-                    )
-                } else {
-                    PlayerContentBook(
-                        uiState,
-                        DevicePosture.BookPosture(devicePosture.hingePosition),
-                        onBackPress,
-                        play,
-                        playbackPositionState
-                    )
-                }
-            else ->
-                PlayerContentRegular(uiState, onBackPress, play, playbackPositionState)
-        }
+        PlayerContentRegular(uiState, onBackPress, play, playbackPositionState)
     }
 }
 
@@ -223,168 +181,6 @@ private fun PlayerContentRegular(
     }
 }
 
-@Composable
-private fun PlayerContentTableTop(
-    uiState: PlayerUiState,
-    tableTopPosture: DevicePosture.TableTopPosture,
-    onBackPress: () -> Unit,
-    play: (playState: PlayerState) -> PlayerState,
-    playbackPositionState: Long
-) {
-    val hingePosition = with(LocalDensity.current) { tableTopPosture.hingePosition.top.toDp() }
-    val hingeHeight = with(LocalDensity.current) { tableTopPosture.hingePosition.height().toDp() }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Content for the top part of the screen
-        Column(
-            modifier = Modifier
-                .height(hingePosition)
-                .fillMaxWidth()
-                .verticalGradientScrim(
-                    color = MaterialTheme.colors.primary.copy(alpha = 0.50f),
-                    startYPercentage = 1f,
-                    endYPercentage = 0f
-                )
-                .windowInsetsPadding(
-                    WindowInsets.systemBars.only(
-                        WindowInsetsSides.Horizontal + WindowInsetsSides.Top
-                    )
-                )
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            PlayerImage(uiState.podcastImageUrl)
-        }
-        // Space for the hinge
-        Spacer(modifier = Modifier.height(hingeHeight))
-        // Content for the table part of the screen
-        Column(
-            modifier = Modifier
-                .windowInsetsPadding(
-                    WindowInsets.systemBars.only(
-                        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
-                    )
-                )
-                .padding(horizontal = 32.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            TopAppBar(onBackPress = onBackPress)
-            PodcastDescription(
-                title = uiState.title,
-                podcastName = uiState.podcastName,
-                titleTextStyle = MaterialTheme.typography.h6
-            )
-            Spacer(modifier = Modifier.weight(0.5f))
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(10f)
-            ) {
-                PlayerButtons(
-                    playerButtonSize = 92.dp, modifier = Modifier.padding(top = 8.dp),
-                    playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady(playbackPositionState),
-                    play = play
-                )
-                PlayerSlider(uiState, play, playbackPositionState)
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlayerContentBook(
-    uiState: PlayerUiState,
-    bookPosture: DevicePosture.BookPosture,
-    onBackPress: () -> Unit,
-    play: (playState: PlayerState) -> PlayerState,
-    playbackPositionState: Long
-) {
-    val hingePosition = with(LocalDensity.current) { bookPosture.hingePosition.left.toDp() }
-    val hingeWidth = with(LocalDensity.current) { bookPosture.hingePosition.width().toDp() }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalGradientScrim(
-                color = MaterialTheme.colors.primary.copy(alpha = 0.50f),
-                startYPercentage = 1f,
-                endYPercentage = 0f
-            )
-            .systemBarsPadding()
-            .padding(horizontal = 8.dp)
-    ) {
-        TopAppBar(onBackPress = onBackPress)
-
-        Row(modifier = Modifier.fillMaxSize()) {
-            // Content for the left part of the screen
-            PlayerContentBookLeft(hingePosition, uiState)
-            // Space for the hinge
-            Spacer(modifier = Modifier.width(hingeWidth))
-            // Content for the right part of the screen
-            PlayerContentBookRight(uiState, playbackPositionState, play)
-        }
-    }
-}
-
-@Composable
-private fun PlayerContentBookLeft(
-    hingePosition: Dp,
-    uiState: PlayerUiState
-) {
-    Column(
-        modifier = Modifier
-            .width(hingePosition)
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        ) {
-            Spacer(modifier = Modifier.weight(1f))
-            Spacer(modifier = Modifier.height(32.dp))
-            PodcastInformation(
-                uiState.title,
-                uiState.podcastName,
-                uiState.summary
-            )
-        }
-    }
-}
-
-@Composable
-private fun PlayerContentBookRight(
-    uiState: PlayerUiState,
-    playbackPositionState: Long,
-    play: (playState: PlayerState) -> PlayerState,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.weight(1f))
-        PlayerImage(
-            podcastImageUrl = uiState.podcastImageUrl,
-            modifier = Modifier.weight(10f)
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        PodcastDescription(uiState.title, uiState.podcastName)
-        Spacer(modifier = Modifier.height(32.dp))
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(10f)
-        ) {
-            PlayerSlider(uiState, play, playbackPositionState)
-            PlayerButtons(
-                Modifier.padding(vertical = 8.dp),
-                playState = if (uiState.isPlaying) Playing(playbackPositionState) else PlayerReady(playbackPositionState),
-                play = play
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-    }
-}
 
 @Composable
 private fun TopAppBar(onBackPress: () -> Unit) {
@@ -452,42 +248,6 @@ private fun PodcastDescription(
 }
 
 @Composable
-private fun PodcastInformation(
-    title: String,
-    name: String,
-    summary: String,
-    titleTextStyle: TextStyle = MaterialTheme.typography.h5,
-    nameTextStyle: TextStyle = MaterialTheme.typography.h3,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Text(
-            text = name,
-            style = nameTextStyle,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = title,
-            style = titleTextStyle,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-            Text(
-                text = summary,
-                style = MaterialTheme.typography.body2,
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-    }
-}
-
-@Composable
 private fun PlayerSlider(
     uiState: PlayerUiState,
     play: (playState: PlayerState) -> PlayerState,
@@ -509,12 +269,10 @@ private fun PlayerSlider(
                 }
             )
 
-
             Row(Modifier.fillMaxWidth()) {
-                Text(text = "${position * episodeDuration.seconds}s")
+                Text(text = (position * episodeDuration.seconds).toLong().toHHMMSS())
                 Spacer(modifier = Modifier.weight(1f))
-                Text("${episodeDuration.seconds}")
-//                Text("${episodeDuration.toMinutesPart()}: ${episodeDuration.toSecondsPart()}")
+                Text(episodeDuration.seconds.toHHMMSS())
             }
         }
     }
