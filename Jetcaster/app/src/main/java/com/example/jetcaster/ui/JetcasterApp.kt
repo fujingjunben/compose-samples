@@ -49,7 +49,7 @@ fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>) {
             tabs.forEach { tab ->
                 BottomNavigationItem(
                     icon = { Icon(painterResource(tab.icon), contentDescription = null) },
-                    label = { Text(stringResource(tab.title).uppercase(Locale.getDefault())) },
+                    label = { Text(stringResource(tab.title)) },
                     selected = currentRoute == tab.route,
                     onClick = {
                         if (tab.route != currentRoute) {
@@ -62,7 +62,7 @@ fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>) {
                             }
                         }
                     },
-                    alwaysShowLabel = false,
+                    alwaysShowLabel = true,
                     selectedContentColor = MaterialTheme.colors.secondary,
                     unselectedContentColor = LocalContentColor.current,
                     modifier = Modifier.navigationBarsPadding()
