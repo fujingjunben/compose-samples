@@ -62,6 +62,8 @@ class PlayerControllerImpl(
                 playState = playState.copy(currentMediaId = uiState.url, isPlaying = true)
                 if (uiState.playState.position > 0L) {
                     controller?.seekAndPlay(uiState, uiState.playState.position)
+                } else {
+                    controller?.play(uiState)
                 }
                 Playing(0L)
             }
@@ -85,6 +87,14 @@ class PlayerControllerImpl(
                 } else {
                     PlayerPause(position)
                 }
+            }
+            is PlayerSeekBack -> {
+                controller?.seekBack()
+                Playing(controller!!.currentPosition)
+            }
+            is PlayerSeekForward -> {
+                controller?.seekForward()
+                Playing(controller!!.currentPosition)
             }
             is PlayerError -> {
                 PlayerError

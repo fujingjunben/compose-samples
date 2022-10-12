@@ -324,7 +324,9 @@ private fun PlayerButtons(
             contentDescription = stringResource(R.string.cd_reply10),
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
-            modifier = buttonsModifier
+            modifier = buttonsModifier.clickable {
+                state = play(PlayerSeekBack)
+            }
         )
         Image(
             imageVector = icon,
@@ -336,7 +338,6 @@ private fun PlayerButtons(
                 .semantics { role = Role.Button }
                 .clickable {
                     state = play(state)
-
                 }
         )
         Image(
@@ -344,7 +345,9 @@ private fun PlayerButtons(
             contentDescription = stringResource(R.string.cd_forward30),
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
-            modifier = buttonsModifier
+            modifier = buttonsModifier.clickable {
+                state = play(PlayerSeekForward)
+            }
         )
         Image(
             imageVector = Icons.Filled.SkipNext,

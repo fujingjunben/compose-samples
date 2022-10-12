@@ -2,6 +2,7 @@ package com.example.jetcaster.play
 
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -13,16 +14,27 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class PlaybackService: MediaSessionService() {
+class PlaybackService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
-    private lateinit var player: ExoPlayer
+    private lateinit var player: Player
 
     override fun onCreate() {
         super.onCreate()
-        player = ExoPlayer.Builder(this)
+        val exoPlayer: ExoPlayer = ExoPlayer.Builder(this)
             .setAudioAttributes(AudioAttributes.DEFAULT, /* handleAudioFocus= */ true)
+            .setHandleAudioBecomingNoisy(true)
+            .setSeekBackIncrementMs(Keys.SKIP_BACK_TIME_SPAN)
+            .setSeekForwardIncrementMs(Keys.SKIP_FORWARD_TIME_SPAN)
             .build()
-        player.addListener(playerListener)
+        exoPlayer.addListener(playerListener)
+
+        // manually add seek to next and seek to previous since headphones issue them and they are translated to skip 30 sec forward / 10 sec back
+        player = object : ForwardingPlayer(exoPlayer) {
+            override fun getAvailableCommands(): Player.Commands {
+                return super.getAvailableCommands().buildUpon().add(Player.COMMAND_SEEK_TO_NEXT).add(Player.COMMAND_SEEK_TO_PREVIOUS).build()
+            }
+        }
+
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(CustomSessionCallback())
             .build()
