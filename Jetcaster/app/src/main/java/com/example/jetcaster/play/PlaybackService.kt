@@ -54,9 +54,7 @@ class PlaybackService: MediaSessionService() {
 
             if (isPlaying) {
                 // playback is active - start to periodically save the playback position to database
-                println("playing")
             } else {
-                println("state: ${player.playbackState}")
                 // playback is not active - stop periodically saving the playback position to database
 
                 // Not playing because playback is paused, ended, suppressed, or the player

@@ -73,7 +73,6 @@ class PlayerViewModel(
     init {
         viewModelScope.launch {
             val episode = episodeStore.episodeWithUri(episodeUri).first()
-            println("episode: $episode")
             val podcast = podcastStore.podcastWithUri(episode.podcastUri).first()
             uiState = PlayerUiState(
                 title = episode.title,

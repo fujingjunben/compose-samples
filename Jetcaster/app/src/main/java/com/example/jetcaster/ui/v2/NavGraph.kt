@@ -27,8 +27,12 @@ fun NavGraph(
     appState: JetcasterAppState = rememberJetcasterAppState(navController = navController)
 ) {
     NavHost(navController = navController, startDestination = Destination.EXPLORE_ROUTE) {
-        composable(Destination.FAVOURITE_ROUTE) {
-            Favourite()
+        composable(Destination.FAVOURITE_ROUTE) { backStackEntry ->
+            Favourite(
+                navigateToPlayer = { episodeUri ->
+                    appState.navigateToPlayer(episodeUri, backStackEntry)
+                }
+            )
         }
         composable(Destination.EXPLORE_ROUTE) { backStackEntry ->
             BackHandler {

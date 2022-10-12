@@ -54,7 +54,6 @@ class PlayerControllerImpl(
     }
 
     override fun play(uiState: PlayerUiState): PlayerState {
-        println("uiState: $uiState")
         return when (uiState.playState) {
             is PlayerReady -> {
                 if (playState.currentMediaId.isNotEmpty() && playState.currentMediaId != uiState.url) {
@@ -78,7 +77,6 @@ class PlayerControllerImpl(
                 val isPlaying = controller!!.isPlaying
                 controller?.pause()
                 val position = uiState.playState.position
-                println("playbackPosition: $position")
                 controller?.seekTo(position)
 
                 if (isPlaying) {
@@ -180,7 +178,6 @@ class PlayerControllerImpl(
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            println("onIsPlayingChanged: $isPlaying")
             if (isPlaying) {
                 togglePeriodicProgressUpdateRequest()
             }
