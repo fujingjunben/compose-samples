@@ -43,6 +43,10 @@ class EpisodeStore(
         return episodesDao.episodesForPodcastUri(podcastUri, limit)
     }
 
+    fun episodeWhichIsPlaying(): Flow<EpisodeToPodcast> {
+        return episodesDao.episodeWhichIsPlaying()
+    }
+
     /**
      * Add a new [EpisodeEntity] to this store.
      *

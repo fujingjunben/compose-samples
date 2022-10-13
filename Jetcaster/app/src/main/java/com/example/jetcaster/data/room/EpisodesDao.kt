@@ -52,6 +52,19 @@ abstract class EpisodesDao {
         limit: Int
     ): Flow<List<EpisodeEntity>>
 
+
+    @Transaction
+    @Query(
+        """
+        SELECT episodes.* FROM episodes 
+        INNER JOIN podcasts ON podcasts.uri = episodes.podcast_uri
+        WHERE episodes.is_playing
+        """
+    )
+    abstract fun episodeWhichIsPlaying(
+    ): Flow<EpisodeToPodcast>
+
+
     @Transaction
     @Query(
         """
