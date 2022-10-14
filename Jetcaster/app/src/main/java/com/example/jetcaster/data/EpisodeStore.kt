@@ -43,7 +43,7 @@ class EpisodeStore(
         return episodesDao.episodesForPodcastUri(podcastUri, limit)
     }
 
-    fun episodeWhichIsPlaying(): Flow<EpisodeToPodcast> {
+    fun episodeWhichIsPlaying(): Flow<List<EpisodeToPodcast>> {
         return episodesDao.episodeWhichIsPlaying()
     }
 

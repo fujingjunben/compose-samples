@@ -12,9 +12,7 @@ import com.example.jetcaster.ui.player.PlayerUiState
 abstract class PlayerController {
     abstract fun init(context: Context)
     abstract fun release()
-    abstract fun play(episode: Episode, playerState: PlayerState): PlayerState
+    abstract fun play(episode: Episode): PlayerState
     abstract fun bind(listener: PlaybackPositionListener)
-    open fun isPlaying(url: String) : Boolean {
-        return false
-    }
+    abstract fun queryEpisodeState(url: String) : PlayerState
 }

@@ -33,6 +33,7 @@ import com.example.jetcaster.data.PodcastStore
 import com.example.jetcaster.play.Ready
 import com.example.jetcaster.play.PlayerState
 import com.example.jetcaster.play.PlayerController
+import com.example.jetcaster.play.Playing
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -46,13 +47,12 @@ data class PlayerUiState(
     val summary: String = "",
     val podcastImageUrl: String = "",
     val url: String = "",
-    val playState: PlayerState = Ready,
-    val isPlaying: Boolean = false,
+    val playerState: PlayerState = Ready,
     val playbackPosition: Long = 0L
 ) {
     fun toEpisode(): Episode {
         return Episode(
-            isPlaying = isPlaying,
+            playerState = playerState,
             title = title,
             duration = duration,
             playbackPosition = playbackPosition,
@@ -84,6 +84,7 @@ class PlayerViewModel(
         private set
 
     init {
+        val playerState = playerController.queryEpisodeState(episodeUri)
         viewModelScope.launch {
             val episode = episodeStore.episodeWithUri(episodeUri).first()
             val podcast = podcastStore.podcastWithUri(episode.podcastUri).first()
@@ -94,23 +95,23 @@ class PlayerViewModel(
                 summary = episode.summary ?: "",
                 podcastImageUrl = podcast.imageUrl ?: "",
                 url = episode.uri,
-                isPlaying = playerController.isPlaying(episode.uri)
+                playerState = playerState
             )
             playbackPosition = episode.playbackPosition
         }
 
         // if episode is playing
-        if (playerController.isPlaying(episodeUri)) {
+        if (playerState is Playing) {
             playerController.bind(this)
         }
     }
 
-    fun play(playState: PlayerState): PlayerState {
+    fun play(playerState: PlayerState): PlayerState {
         // if episode is going to play for first time
-        if (!uiState.isPlaying && playState is Ready) {
+        if (uiState.playerState !is Playing && playerState is Ready) {
             playerController.bind(this)
         }
-        return playerController.play(uiState.toEpisode(), playState)
+        return playerController.play(uiState.toEpisode().copy(playerState = playerState))
     }
 
     override fun onChange(position: Long) {

@@ -22,7 +22,7 @@ import java.lang.Runnable
 
 private data class EpisodeState(
     val currentMediaId: String = "",
-    val isPlaying: Boolean = false,
+    val playerState: PlayerState = None,
     val playbackPosition: Long = 0L
 )
 
@@ -39,11 +39,11 @@ class PlayerControllerImpl(
 
     private var episodeState: EpisodeState = EpisodeState()
 
-    override fun isPlaying(url: String): Boolean {
+    override fun queryEpisodeState(url: String): PlayerState {
         return if (url == episodeState.currentMediaId) {
-            episodeState.isPlaying
+            episodeState.playerState
         } else {
-            false
+            Ready
         }
     }
 
@@ -55,25 +55,25 @@ class PlayerControllerImpl(
         releaseController()
     }
 
-    override fun play(episode: Episode, playerState: PlayerState): PlayerState {
-        return when (playerState) {
+    override fun play(episode: Episode): PlayerState {
+        return when (val playerState = episode.playerState) {
             is Ready -> {
                 if (episode.url != episodeState.currentMediaId) {
-                    updateEpisode(episodeState.copy(isPlaying = false))
+                    updateEpisode(episodeState.copy(playerState = Pause))
                 }
                 mController?.play(episode)
-                episodeState = episodeState.copy(currentMediaId = episode.url, isPlaying = true)
+                episodeState = episodeState.copy(currentMediaId = episode.url, playerState = Playing)
                 Playing
             }
             is Playing -> {
                 mController?.pause()
-                episodeState = episodeState.copy(isPlaying = false)
+                episodeState = episodeState.copy(playerState = Pause)
                 updateEpisode(episodeState)
                 Pause
             }
             is Pause -> {
                 mController?.continuePlayback()
-                episodeState = episodeState.copy(isPlaying = true)
+                episodeState = episodeState.copy(playerState = Playing)
                 Playing
             }
             is SeekTo -> {
@@ -210,7 +210,7 @@ class PlayerControllerImpl(
             episodeStore.updateEpisode(
                 episode.copy(
                     playbackPosition = position,
-                    isPlaying = episodeState.isPlaying
+                    isPlaying = episodeState.playerState is Playing
                 )
             )
         }

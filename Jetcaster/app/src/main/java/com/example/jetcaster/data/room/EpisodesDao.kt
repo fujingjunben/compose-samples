@@ -62,7 +62,7 @@ abstract class EpisodesDao {
         """
     )
     abstract fun episodeWhichIsPlaying(
-    ): Flow<EpisodeToPodcast>
+    ): Flow<List<EpisodeToPodcast>>
 
 
     @Transaction

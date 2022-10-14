@@ -75,7 +75,8 @@ fun PlayerBarContent(
     Surface {
         Row(
             modifier = modifier
-                .height(50.dp),
+                .height(50.dp)
+                .padding(end = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // If we have an image Url, we can show it using Coil
@@ -105,11 +106,11 @@ fun PlayerBarContent(
                 contentScale = ContentScale.FillHeight,
                 colorFilter = ColorFilter.tint(LocalContentColor.current),
                 modifier = Modifier
+                    .fillMaxHeight()
                     .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = false, radius = 24.dp)
+//                        interactionSource = remember { MutableInteractionSource() },
+//                        indication = rememberRipple(bounded = false, radius = 24.dp)
                     ) { state = play(state) }
-                    .padding(end = 5.dp)
             )
 
         }

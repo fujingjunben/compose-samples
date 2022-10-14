@@ -1,10 +1,11 @@
 package com.example.jetcaster.data
 
+import com.example.jetcaster.play.PlayerState
 import java.time.Duration
 
 const val THRESHOLD = 500
 
-data class Episode(val isPlaying: Boolean,
+data class Episode(val playerState: PlayerState,
                    val duration: Duration?,
                    val playbackPosition: Long,
                    val url: String,

@@ -32,8 +32,16 @@ class PlayerBarViewModel(
 
     init {
         viewModelScope.launch {
-            val episodeToPodcast: EpisodeToPodcast = episodeStore.episodeWhichIsPlaying().first()
-            viewModelState.update { it.copy(episodeToPodcast = episodeToPodcast) }
+            episodeStore.episodeWhichIsPlaying().collect {
+                episodeToPodcasts ->
+                episodeToPodcasts.forEach {
+                    val (episode) = it
+                    println("episodeToPodcasts : $episode")
+                }
+                if (episodeToPodcasts.isNotEmpty()) {
+                    viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
+                }
+            }
         }
     }
 
@@ -47,10 +55,10 @@ class PlayerBarViewModel(
                     podcastImageUrl = podcast.imageUrl,
                     podcastName = podcast.title,
                     playbackPosition = episodeEntity.playbackPosition,
-                    isPlaying = episodeEntity.isPlaying,
+                    playerState = playerState,
                     duration = episodeEntity.duration
                 )
-                controller.play(episode, playerState)
+                controller.play(episode)
             }
             else -> None
         }

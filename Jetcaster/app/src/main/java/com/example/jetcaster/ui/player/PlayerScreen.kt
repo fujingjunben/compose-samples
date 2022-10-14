@@ -164,11 +164,7 @@ private fun PlayerContentRegular(
                 PlayerSlider(uiState, play, playbackPositionState)
                 PlayerButtons(
                     Modifier.padding(vertical = 8.dp),
-                    playState = if (uiState.isPlaying) {
-                        Playing
-                    } else {
-                        Ready
-                    },
+                    playState = uiState.playerState,
                     play = play
                 )
             }
