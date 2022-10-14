@@ -4,42 +4,44 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import androidx.compose.runtime.MutableState
-import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.jetcaster.Graph
+import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.extension.continuePlayback
 import com.example.jetcaster.data.extension.hasMediaItems
 import com.example.jetcaster.data.extension.play
-import com.example.jetcaster.data.extension.seekAndPlay
 import com.example.jetcaster.ui.player.PlaybackPositionListener
-import com.example.jetcaster.ui.player.PlayerUiState
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import java.lang.Runnable
 
+private data class EpisodeState(
+    val currentMediaId: String = "",
+    val isPlaying: Boolean = false,
+    val playbackPosition: Long = 0L
+)
+
 class PlayerControllerImpl(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : PlayerController() {
     private lateinit var controllerFuture: ListenableFuture<MediaController>
-    private val controller: MediaController?
+    private val mController: MediaController?
         get() = if (controllerFuture.isDone) controllerFuture.get() else null
 
     private val handler: Handler = Handler(Looper.getMainLooper())
 
     private val episodeStore = Graph.episodeStore
 
-    private var playState: PlayState = PlayState()
+    private var episodeState: EpisodeState = EpisodeState()
 
     override fun isPlaying(url: String): Boolean {
-        return if (url == playState.currentMediaId) {
-            playState.isPlaying
+        return if (url == episodeState.currentMediaId) {
+            episodeState.isPlaying
         } else {
             false
         }
@@ -53,52 +55,49 @@ class PlayerControllerImpl(
         releaseController()
     }
 
-    override fun play(uiState: PlayerUiState): PlayerState {
-        return when (uiState.playState) {
-            is PlayerReady -> {
-                if (playState.currentMediaId.isNotEmpty() && playState.currentMediaId != uiState.url) {
-                    updateEpisode(playState.copy(isPlaying = false))
+    override fun play(episode: Episode, playerState: PlayerState): PlayerState {
+        return when (playerState) {
+            is Ready -> {
+                if (episode.url != episodeState.currentMediaId) {
+                    updateEpisode(episodeState.copy(isPlaying = false))
                 }
-                playState = playState.copy(currentMediaId = uiState.url, isPlaying = true)
-                if (uiState.playState.position > 0L) {
-                    controller?.seekAndPlay(uiState, uiState.playState.position)
-                } else {
-                    controller?.play(uiState)
-                }
-                Playing(0L)
+                mController?.play(episode)
+                episodeState = episodeState.copy(currentMediaId = episode.url, isPlaying = true)
+                Playing
             }
             is Playing -> {
-                controller?.pause()
-                PlayerPause(playState.playbackPosition)
+                mController?.pause()
+                episodeState = episodeState.copy(isPlaying = false)
+                updateEpisode(episodeState)
+                Pause
             }
-            is PlayerPause -> {
-                controller?.continuePlayback()
-                Playing(playState.playbackPosition)
+            is Pause -> {
+                mController?.continuePlayback()
+                episodeState = episodeState.copy(isPlaying = true)
+                Playing
             }
-            is PlayerSeek -> {
-                val isPlaying = controller!!.isPlaying
-                controller?.pause()
-                val position = uiState.playState.position
-                controller?.seekTo(position)
+            is SeekTo -> {
+                val isPlaying = mController!!.isPlaying
+                mController?.pause()
+                val position = playerState.position
+                mController?.seekTo(position)
 
                 if (isPlaying) {
-                    controller?.continuePlayback()
-                    Playing(position)
+                    mController?.continuePlayback()
+                    Playing
                 } else {
-                    PlayerPause(position)
+                    Pause
                 }
             }
-            is PlayerSeekBack -> {
-                controller?.seekBack()
-                Playing(controller!!.currentPosition)
+            is SeekBack -> {
+                mController?.seekBack()
+                Playing
             }
-            is PlayerSeekForward -> {
-                controller?.seekForward()
-                Playing(controller!!.currentPosition)
+            is SeekForward -> {
+                mController?.seekForward()
+                Playing
             }
-            is PlayerError -> {
-                PlayerError
-            }
+            else -> playerState
         }
     }
 
@@ -122,7 +121,7 @@ class PlayerControllerImpl(
 
     /* Sets up the MediaController  */
     private fun setupController() {
-        val controller: MediaController = this.controller ?: return
+        val controller: MediaController = this.mController ?: return
 
         // update playback progress state
 //        togglePeriodicProgressUpdateRequest()
@@ -132,7 +131,7 @@ class PlayerControllerImpl(
 
     /* Toggle periodic request of playback position from player service */
     private fun togglePeriodicProgressUpdateRequest() {
-        when (controller?.isPlaying) {
+        when (mController?.isPlaying) {
             true -> {
                 handler.removeCallbacks(periodicProgressUpdateRequestRunnable)
                 handler.postDelayed(periodicProgressUpdateRequestRunnable, 0)
@@ -168,11 +167,11 @@ class PlayerControllerImpl(
     /* Updates the progress bar */
     private fun updateProgressBar() {
         // update progress bar - only if controller is prepared with a media item
-        val position = controller?.currentPosition ?: 0L
-        playState = playState.copy(playbackPosition = position)
+        val position = mController?.currentPosition ?: 0L
+        episodeState = episodeState.copy(playbackPosition = position)
         positionListener?.onChange(position)
-        if (controller?.hasMediaItems() == true) {
-            updateEpisode(playState)
+        if (mController?.hasMediaItems() == true) {
+            updateEpisode(episodeState)
         }
     }
 
@@ -194,27 +193,28 @@ class PlayerControllerImpl(
         }
     }
 
-    private fun updateEpisode(playState: PlayState) {
-        if (controller == null) {
+    private fun updateEpisode(episodeState: EpisodeState) {
+        if (mController == null) {
             return
         }
+
+        if (episodeState.currentMediaId.isEmpty()) {
+            return
+        }
+
         val position =
-            if (playState.playbackPosition >= controller!!.duration) 0L else playState.playbackPosition
+            if (episodeState.playbackPosition >= mController!!.duration - 500) 0L else episodeState.playbackPosition
 
         scope.launch {
-            val episode = episodeStore.episodeWithUri(playState.currentMediaId).first()
+            val episode = episodeStore.episodeWithUri(episodeState.currentMediaId).first()
             episodeStore.updateEpisode(
                 episode.copy(
                     playbackPosition = position,
-                    isPlaying = playState.isPlaying
+                    isPlaying = episodeState.isPlaying
                 )
             )
         }
     }
 
-    data class PlayState(
-        val currentMediaId: String = "",
-        val isPlaying: Boolean = false,
-        val playbackPosition: Long = 0L
-    )
+
 }

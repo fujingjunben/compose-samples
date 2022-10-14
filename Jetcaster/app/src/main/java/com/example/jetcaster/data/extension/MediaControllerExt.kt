@@ -31,17 +31,10 @@ import com.google.common.util.concurrent.ListenableFuture
 private val TAG: String = "MediaControllerExt"
 
 
-fun MediaController.play(uiState: PlayerUiState) {
-    setMediaItem(buildMediaItem(uiState))
+fun MediaController.play(episode: Episode) {
+    setMediaItem(buildMediaItem(episode, true))
     prepare()
     play()
-}
-
-fun MediaController.seekAndPlay(uiState: PlayerUiState, position: Long) {
-    setMediaItem(buildMediaItem(uiState))
-    seekTo(position)
-    prepare()
-    playWhenReady = true
 }
 
 
@@ -77,7 +70,7 @@ fun MediaController.requestSleepTimerRemaining(): ListenableFuture<SessionResult
 fun MediaController.play(episode: Episode, streaming: Boolean) {
     if (isPlaying) pause()
     // set media item, prepare and play
-    val position: Long = if (episode.isFinished) 0L else episode.playbackPosition
+    val position: Long = if (episode.isFinished()) 0L else episode.playbackPosition
     setMediaItem(buildMediaItem(episode, streaming), position)
     prepare()
     play()
@@ -94,7 +87,7 @@ private fun buildMediaItem(episode: Episode, streaming: Boolean): MediaItem {
     val mediaMetadata = MediaMetadata.Builder().apply {
         setAlbumTitle(episode.podcastName)
         setTitle(episode.title)
-        setArtworkUri(episode.podcastImageUrl.toUri())
+        setArtworkUri(episode.podcastImageUrl?.toUri())
     }.build()
     return MediaItem.Builder().apply {
         setRequestMetadata(requestMetadata)
@@ -103,26 +96,6 @@ private fun buildMediaItem(episode: Episode, streaming: Boolean): MediaItem {
     }.build()
 }
 
-private fun buildMediaItem(state: PlayerUiState): MediaItem {
-    // get the correct source for streaming / local playback
-    // put uri in RequestMetadata - credit: https://stackoverflow.com/a/70103460
-    val source = state.url
-    val requestMetadata = MediaItem.RequestMetadata.Builder().apply {
-        setMediaUri(source.toUri())
-    }.build()
-    // build MediaItem and return it
-    val mediaMetadata = MediaMetadata.Builder().apply {
-        setAlbumTitle(state.podcastName)
-        setTitle(state.title)
-        setArtworkUri(state.podcastImageUrl.toUri())
-    }.build()
-    return MediaItem.Builder().apply {
-        setMediaId(state.url)
-        setRequestMetadata(requestMetadata)
-        setMediaMetadata(mediaMetadata)
-        setUri(source.toUri())
-    }.build()
-}
 
 /* Puts current episode into playlist */
 fun MediaController.setCurrentEpisode(episode: Episode?, streaming: Boolean) {

@@ -27,12 +27,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.jetcaster.Graph
+import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.PodcastStore
-import com.example.jetcaster.play.PlayerReady
+import com.example.jetcaster.play.Ready
 import com.example.jetcaster.play.PlayerState
 import com.example.jetcaster.play.PlayerController
-import com.example.jetcaster.play.Playing
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -46,9 +46,22 @@ data class PlayerUiState(
     val summary: String = "",
     val podcastImageUrl: String = "",
     val url: String = "",
-    val playState: PlayerState = PlayerReady(0L),
-    val isPlaying: Boolean = false
-)
+    val playState: PlayerState = Ready,
+    val isPlaying: Boolean = false,
+    val playbackPosition: Long = 0L
+) {
+    fun toEpisode(): Episode {
+        return Episode(
+            isPlaying = isPlaying,
+            title = title,
+            duration = duration,
+            playbackPosition = playbackPosition,
+            podcastImageUrl = podcastImageUrl,
+            podcastName = podcastName,
+            url = url
+        )
+    }
+}
 
 /**
  * ViewModel that handles the business logic and screen state of the Player screen
@@ -86,16 +99,18 @@ class PlayerViewModel(
             playbackPosition = episode.playbackPosition
         }
 
-        if (uiState.isPlaying) {
+        // if episode is playing
+        if (playerController.isPlaying(episodeUri)) {
             playerController.bind(this)
         }
     }
 
     fun play(playState: PlayerState): PlayerState {
-        if (!uiState.isPlaying && playState is PlayerReady) {
+        // if episode is going to play for first time
+        if (!uiState.isPlaying && playState is Ready) {
             playerController.bind(this)
         }
-        return playerController.play(uiState.copy(playState = playState))
+        return playerController.play(uiState.toEpisode(), playState)
     }
 
     override fun onChange(position: Long) {

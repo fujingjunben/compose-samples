@@ -3,9 +3,12 @@ package com.example.jetcaster.ui.v2.playerBar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetcaster.Graph
+import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.EpisodeToPodcast
 import com.example.jetcaster.data.PodcastStore
+import com.example.jetcaster.play.None
+import com.example.jetcaster.play.PlayerController
 import com.example.jetcaster.play.PlayerState
 import com.example.jetcaster.play.Playing
 import com.example.jetcaster.ui.player.PlayerUiState
@@ -14,8 +17,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class PlayerBarViewModel(
-    private val podcastStore: PodcastStore = Graph.podcastStore,
-    private val episodeStore: EpisodeStore = Graph.episodeStore
+    private val episodeStore: EpisodeStore = Graph.episodeStore,
+    private val controller: PlayerController = Graph.playerController
 ) : ViewModel() {
     private val viewModelState = MutableStateFlow(PlayerBarViewModelState())
 
@@ -35,7 +38,22 @@ class PlayerBarViewModel(
     }
 
     fun play(playerState: PlayerState): PlayerState {
-        return Playing(0)
+        return when (uiState.value) {
+            is PlayerBarUiState.Success -> {
+                val (episodeEntity, podcast) = (uiState.value as PlayerBarUiState.Success).episodeToPodcast
+                val episode = Episode(
+                    url = episodeEntity.uri,
+                    title = episodeEntity.title,
+                    podcastImageUrl = podcast.imageUrl,
+                    podcastName = podcast.title,
+                    playbackPosition = episodeEntity.playbackPosition,
+                    isPlaying = episodeEntity.isPlaying,
+                    duration = episodeEntity.duration
+                )
+                controller.play(episode, playerState)
+            }
+            else -> None
+        }
     }
 }
 

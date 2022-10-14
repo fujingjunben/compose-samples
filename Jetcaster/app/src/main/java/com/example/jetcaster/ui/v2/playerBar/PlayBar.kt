@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PauseCircleFilled
 import androidx.compose.material.icons.rounded.PlayCircleFilled
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
@@ -27,9 +28,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.jetcaster.R
 import com.example.jetcaster.data.EpisodeToPodcast
+import com.example.jetcaster.play.Pause
+import com.example.jetcaster.play.Playing
+import com.example.jetcaster.play.Ready
 
 @Composable
 fun PlayerBar(
+    playerState: PlayerState,
     modifier: Modifier = Modifier,
     viewModel: PlayerBarViewModel = viewModel()
 ) {
@@ -43,6 +48,7 @@ fun PlayerBar(
             PlayerBarContent(
                 modifier,
                 (uiState as PlayerBarUiState.Success).episodeToPodcast,
+                playerState,
                 viewModel::play
             )
         }
@@ -53,15 +59,23 @@ fun PlayerBar(
 fun PlayerBarContent(
     modifier: Modifier,
     episodeToPodcast: EpisodeToPodcast,
+    playerState: PlayerState,
     play: (playerState: PlayerState) -> PlayerState
 ) {
+    var state by remember {
+        mutableStateOf(playerState)
+    }
+
+    val icon = when (state) {
+        is Playing -> Icons.Rounded.PauseCircleFilled
+        else -> Icons.Rounded.PlayCircleFilled
+    }
+
     val (episode, podcast) = episodeToPodcast
     Surface {
         Row(
             modifier = modifier
-                .fillMaxWidth()
                 .height(50.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // If we have an image Url, we can show it using Coil
@@ -79,21 +93,22 @@ fun PlayerBarContent(
 
             Text(
                 text = episode.title,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.subtitle2,
+                modifier = Modifier.weight(1f)
             )
 
             Image(
-                imageVector = Icons.Rounded.PlayCircleFilled,
+                imageVector = icon,
                 contentDescription = stringResource(R.string.cd_play),
                 contentScale = ContentScale.FillHeight,
                 colorFilter = ColorFilter.tint(LocalContentColor.current),
                 modifier = Modifier
-//                    .clickable(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        indication = rememberRipple(bounded = false, radius = 24.dp)
-//                    ) { /* TODO */ }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = false, radius = 24.dp)
+                    ) { state = play(state) }
                     .padding(end = 5.dp)
             )
 

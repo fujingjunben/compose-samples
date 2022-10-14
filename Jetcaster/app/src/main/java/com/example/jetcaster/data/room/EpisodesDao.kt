@@ -58,7 +58,7 @@ abstract class EpisodesDao {
         """
         SELECT episodes.* FROM episodes 
         INNER JOIN podcasts ON podcasts.uri = episodes.podcast_uri
-        WHERE episodes.is_playing
+        WHERE episodes.is_playing <> 0
         """
     )
     abstract fun episodeWhichIsPlaying(

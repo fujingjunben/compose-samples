@@ -1,36 +1,20 @@
-package com.example.jetcaster.ui.v2
+package com.example.jetcaster.ui
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Forward30
-import androidx.compose.material.icons.filled.Replay10
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.rounded.PauseCircleFilled
-import androidx.compose.material.icons.rounded.PlayCircleFilled
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.jetcaster.R
 import com.example.jetcaster.play.*
 import com.example.jetcaster.ui.theme.JetcasterTheme
+import com.example.jetcaster.ui.v2.NavGraph
+import com.example.jetcaster.ui.v2.Tabs
 import com.example.jetcaster.ui.v2.playerBar.PlayerBar
-import java.util.*
 
 @Composable
 fun PodcastApp() {
@@ -38,20 +22,26 @@ fun PodcastApp() {
         Tabs.values()
     }
     val navController = rememberNavController()
+    var playerState by remember {
+        mutableStateOf<PlayerState>(None)
+    }
     JetcasterTheme {
         Scaffold(
-            bottomBar = { PodcastBottomBar(navController, tabs = tabs) }
+            bottomBar = { PodcastBottomBar(navController, tabs = tabs, playerState) }
         ) { paddingValues ->
             NavGraph(
                 navController = navController,
-                modifier = Modifier.padding(paddingValues)
+                modifier = Modifier.padding(paddingValues),
+                onPlayerChange = { nextPlayerState ->
+                    playerState = nextPlayerState
+                }
             )
         }
     }
 }
 
 @Composable
-fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>) {
+fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>, playerState: PlayerState) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
         ?: Tabs.EXPLORE.route
@@ -59,7 +49,9 @@ fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>) {
     val routes = remember { Tabs.values().map { it.route } }
     if (currentRoute in routes) {
         Column {
-            PlayerBar()
+            if (playerState != None) {
+                PlayerBar(playerState)
+            }
             BottomNavigation(
                 Modifier.windowInsetsBottomHeight(
                     WindowInsets.navigationBars.add(WindowInsets(bottom = 56.dp))

@@ -23,20 +23,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
@@ -65,7 +59,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -75,7 +68,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.window.layout.FoldingFeature
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.jetcaster.R
@@ -83,7 +75,6 @@ import com.example.jetcaster.play.*
 import com.example.jetcaster.ui.theme.JetcasterTheme
 import com.example.jetcaster.ui.theme.MinContrastOfPrimaryVsSurface
 import com.example.jetcaster.util.*
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Stateful version of the Podcast player
@@ -91,11 +82,16 @@ import kotlinx.coroutines.flow.StateFlow
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel,
-    onBackPress: () -> Unit
+    onBackPress: () -> Unit,
+    onPlayerChange: (playerState: PlayerState) -> Unit,
 ) {
     val uiState = viewModel.uiState
     val paybackPositionState = viewModel.playbackPosition
-    PlayerScreen(uiState, onBackPress, viewModel::play, paybackPositionState)
+    PlayerScreen(uiState, onBackPress, play = { playerState ->
+        val nextPlayerState = viewModel.play(playerState)
+        onPlayerChange(nextPlayerState)
+        nextPlayerState
+    }, paybackPositionState)
 }
 
 /**
@@ -105,7 +101,7 @@ fun PlayerScreen(
 private fun PlayerScreen(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
-    play: (playState: PlayerState) -> PlayerState,
+    play: (playerState: PlayerState) -> PlayerState,
     paybackPositionState: Long,
     modifier: Modifier = Modifier
 ) {
@@ -169,9 +165,9 @@ private fun PlayerContentRegular(
                 PlayerButtons(
                     Modifier.padding(vertical = 8.dp),
                     playState = if (uiState.isPlaying) {
-                        Playing(playbackPositionState)
+                        Playing
                     } else {
-                        PlayerReady(playbackPositionState)
+                        Ready
                     },
                     play = play
                 )
@@ -265,7 +261,7 @@ private fun PlayerSlider(
                     position = it
                 },
                 onValueChangeFinished = {
-                    play(PlayerSeek((position * episodeDuration.seconds * 1000).toLong()))
+                    play(SeekTo((position * episodeDuration.seconds * 1000).toLong()))
                 }
             )
 
@@ -286,20 +282,13 @@ private fun PlayerButtons(
     playState: PlayerState,
     play: (playerState: PlayerState) -> PlayerState,
 ) {
-
-    var icon by remember {
-        mutableStateOf(Icons.Rounded.PlayCircleFilled)
-    }
-
     var state by remember {
         mutableStateOf(playState)
     }
 
 
-    icon = when (state) {
-        is PlayerReady -> Icons.Rounded.PlayCircleFilled
+    val icon = when (state) {
         is Playing -> Icons.Rounded.PauseCircleFilled
-        is PlayerPause -> Icons.Rounded.PlayCircleFilled
         else -> Icons.Rounded.PlayCircleFilled
     }
 
@@ -325,7 +314,7 @@ private fun PlayerButtons(
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
             modifier = buttonsModifier.clickable {
-                state = play(PlayerSeekBack)
+                state = play(SeekBack)
             }
         )
         Image(
@@ -346,7 +335,7 @@ private fun PlayerButtons(
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
             modifier = buttonsModifier.clickable {
-                state = play(PlayerSeekForward)
+                state = play(SeekForward)
             }
         )
         Image(

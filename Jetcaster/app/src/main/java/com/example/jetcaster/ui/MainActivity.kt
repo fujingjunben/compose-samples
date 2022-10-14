@@ -16,33 +16,20 @@
 
 package com.example.jetcaster.ui
 
-import android.content.ComponentName
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker.Companion.getOrCreate
 import com.example.jetcaster.Graph
-import com.example.jetcaster.play.PlaybackService
 import com.example.jetcaster.play.PlayerController
-import com.example.jetcaster.ui.player.PlayerUiState
-import com.example.jetcaster.ui.theme.JetcasterTheme
-import com.example.jetcaster.ui.v2.PodcastApp
 import com.example.jetcaster.util.DevicePosture
 import com.example.jetcaster.util.isBookPosture
 import com.example.jetcaster.util.isSeparatingPosture
 import com.example.jetcaster.util.isTableTopPosture
-import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn

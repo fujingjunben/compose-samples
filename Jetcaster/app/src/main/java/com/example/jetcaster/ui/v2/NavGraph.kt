@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.jetcaster.R
+import com.example.jetcaster.play.PlayerState
 import com.example.jetcaster.ui.JetcasterAppState
 import com.example.jetcaster.ui.Screen
 import com.example.jetcaster.ui.player.PlayerScreen
@@ -23,6 +24,7 @@ import com.example.jetcaster.ui.v2.manage.Manage
 fun NavGraph(
     navController: NavHostController,
     modifier: Modifier,
+    onPlayerChange: (playerState: PlayerState) -> Unit,
     finishActivity: () -> Unit = {},
     appState: JetcasterAppState = rememberJetcasterAppState(navController = navController)
 ) {
@@ -54,7 +56,7 @@ fun NavGraph(
                     defaultArgs = backStackEntry.arguments
                 )
             )
-            PlayerScreen(playerViewModel, onBackPress = appState::navigateBack)
+            PlayerScreen(playerViewModel, onBackPress = appState::navigateBack, onPlayerChange)
         }
         composable(Destination.MANAGE_ROUTE) {
             Manage()
