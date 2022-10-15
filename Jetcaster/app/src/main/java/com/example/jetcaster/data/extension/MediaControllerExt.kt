@@ -98,7 +98,7 @@ private fun buildMediaItem(episode: Episode, streaming: Boolean): MediaItem {
 
 
 /* Puts current episode into playlist */
-fun MediaController.setCurrentEpisode(episode: Episode?, streaming: Boolean) {
+fun MediaController.setCurrentEpisode(episode: Episode?, streaming: Boolean = true) {
     if (episode != null) {
         setMediaItem(buildMediaItem(episode, streaming), episode.playbackPosition)
         prepare()

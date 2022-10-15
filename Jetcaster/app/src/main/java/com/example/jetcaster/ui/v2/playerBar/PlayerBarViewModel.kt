@@ -6,15 +6,10 @@ import com.example.jetcaster.Graph
 import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.EpisodeToPodcast
-import com.example.jetcaster.data.PodcastStore
-import com.example.jetcaster.play.None
+import com.example.jetcaster.play.Default
 import com.example.jetcaster.play.PlayerController
-import com.example.jetcaster.play.PlayerState
-import com.example.jetcaster.play.Playing
-import com.example.jetcaster.ui.player.PlayerUiState
-import com.example.jetcaster.ui.v2.favourite.EpisodeOfPodcast
+import com.example.jetcaster.play.PlayerAction
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 class PlayerBarViewModel(
     private val episodeStore: EpisodeStore = Graph.episodeStore,
@@ -45,7 +40,7 @@ class PlayerBarViewModel(
 //        }
     }
 
-    fun play(playerState: PlayerState): PlayerState {
+    fun play(playerAction: PlayerAction): PlayerAction {
         return when (uiState.value) {
             is PlayerBarUiState.Success -> {
                 val (episodeEntity, podcast) = (uiState.value as PlayerBarUiState.Success).episodeToPodcast
@@ -55,12 +50,13 @@ class PlayerBarViewModel(
                     podcastImageUrl = podcast.imageUrl,
                     podcastName = podcast.title,
                     playbackPosition = episodeEntity.playbackPosition,
-                    playerState = playerState,
+                    playerAction = playerAction,
+                    playState = episodeEntity.playState,
                     duration = episodeEntity.duration
                 )
                 controller.play(episode)
             }
-            else -> None
+            else -> Default
         }
     }
 }

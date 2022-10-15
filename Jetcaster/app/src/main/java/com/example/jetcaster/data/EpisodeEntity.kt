@@ -22,6 +22,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.example.jetcaster.play.PlayState
 import java.time.Duration
 import java.time.OffsetDateTime
 
@@ -52,5 +53,6 @@ data class EpisodeEntity(
     @ColumnInfo(name = "published") val published: OffsetDateTime,
     @ColumnInfo(name = "duration") val duration: Duration? = null,
     @ColumnInfo(name = "playback_position") val playbackPosition: Long = 0L,
-    @ColumnInfo(name = "is_playing") val isPlaying: Boolean = false
+    @ColumnInfo(name = "is_playing") val isPlaying: Boolean = false,
+    @ColumnInfo(name = "play_state") val playState: PlayState = PlayState.PREPARE
 )

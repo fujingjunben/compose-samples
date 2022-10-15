@@ -83,13 +83,13 @@ import com.example.jetcaster.util.*
 fun PlayerScreen(
     viewModel: PlayerViewModel,
     onBackPress: () -> Unit,
-    onPlayerChange: (playerState: PlayerState) -> Unit,
+    onPlayerChange: (playerAction: PlayerAction) -> Unit,
 ) {
     val uiState = viewModel.uiState
-    PlayerScreen(uiState, onBackPress, play = { playerState ->
-        val nextPlayerState = viewModel.play(playerState)
-        onPlayerChange(nextPlayerState)
-        nextPlayerState
+    PlayerScreen(uiState, onBackPress, play = { playerAction ->
+        val nextPlayerAction = viewModel.play(playerAction)
+        onPlayerChange(nextPlayerAction)
+        nextPlayerAction
     })
 }
 
@@ -100,7 +100,7 @@ fun PlayerScreen(
 private fun PlayerScreen(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
-    play: (playerState: PlayerState) -> PlayerState,
+    play: (playerAction: PlayerAction) -> PlayerAction,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier) {
@@ -116,7 +116,7 @@ private fun PlayerScreen(
 fun PlayerContent(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
-    play: (playState: PlayerState) -> PlayerState,
+    play: (playerAction: PlayerAction) -> PlayerAction,
 ) {
     PlayerDynamicTheme(uiState.podcastImageUrl) {
         PlayerContentRegular(uiState, onBackPress, play)
@@ -127,7 +127,7 @@ fun PlayerContent(
 private fun PlayerContentRegular(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
-    play: (playState: PlayerState) -> PlayerState
+    play: (playerAction: PlayerAction) -> PlayerAction
 ) {
     Column(
         modifier = Modifier
@@ -160,7 +160,7 @@ private fun PlayerContentRegular(
                 PlayerSlider(uiState, play, uiState.playbackPosition)
                 PlayerButtons(
                     Modifier.padding(vertical = 8.dp),
-                    playState = uiState.playerState,
+                    playerAction = uiState.playerAction,
                     play = play
                 )
             }
@@ -238,7 +238,7 @@ private fun PodcastDescription(
 @Composable
 private fun PlayerSlider(
     uiState: PlayerUiState,
-    play: (playState: PlayerState) -> PlayerState,
+    play: (playerAction: PlayerAction) -> PlayerAction,
     playbackPosition: Long,
 ) {
     val episodeDuration = uiState.duration
@@ -271,15 +271,15 @@ private fun PlayerButtons(
     modifier: Modifier = Modifier,
     playerButtonSize: Dp = 72.dp,
     sideButtonSize: Dp = 48.dp,
-    playState: PlayerState,
-    play: (playerState: PlayerState) -> PlayerState,
+    playerAction: PlayerAction,
+    play: (playerAction: PlayerAction) -> PlayerAction,
 ) {
-    var state by remember {
-        mutableStateOf(playState)
+    var action by remember {
+        mutableStateOf(playerAction)
     }
 
 
-    val icon = when (state) {
+    val icon = when (action) {
         is Playing -> Icons.Rounded.PauseCircleFilled
         else -> Icons.Rounded.PlayCircleFilled
     }
@@ -306,7 +306,7 @@ private fun PlayerButtons(
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
             modifier = buttonsModifier.clickable {
-                state = play(SeekBack)
+                action = play(SeekBack)
             }
         )
         Image(
@@ -318,7 +318,7 @@ private fun PlayerButtons(
                 .size(playerButtonSize)
                 .semantics { role = Role.Button }
                 .clickable {
-                    state = play(state)
+                    action = play(action)
                 }
         )
         Image(
@@ -327,7 +327,7 @@ private fun PlayerButtons(
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
             modifier = buttonsModifier.clickable {
-                state = play(SeekForward)
+                action = play(SeekForward)
             }
         )
         Image(

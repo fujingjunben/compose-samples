@@ -30,10 +30,7 @@ import com.example.jetcaster.Graph
 import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.PodcastStore
-import com.example.jetcaster.play.Ready
-import com.example.jetcaster.play.PlayerState
-import com.example.jetcaster.play.PlayerController
-import com.example.jetcaster.play.Playing
+import com.example.jetcaster.play.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -47,12 +44,13 @@ data class PlayerUiState(
     val summary: String = "",
     val podcastImageUrl: String = "",
     val url: String = "",
-    val playerState: PlayerState = Ready,
-    val playbackPosition: Long = 0L
+    val playState: PlayState = PlayState.PREPARE,
+    val playbackPosition: Long = 0L,
+    val playerAction: PlayerAction = Default
 ) {
     fun toEpisode(): Episode {
         return Episode(
-            playerState = playerState,
+            playState = playState,
             title = title,
             duration = duration,
             playbackPosition = playbackPosition,
@@ -71,7 +69,7 @@ class PlayerViewModel(
     podcastStore: PodcastStore,
     savedStateHandle: SavedStateHandle,
     private val playerController: PlayerController
-) : ViewModel(), PlaybackPositionListener {
+) : ViewModel() {
 
     // episodeUri should always be present in the PlayerViewModel.
     // If that's not the case, fail crashing the app!
@@ -80,10 +78,9 @@ class PlayerViewModel(
     var uiState by mutableStateOf(PlayerUiState())
         private set
 
-    private var playbackPosition by mutableStateOf(0L)
+    private var playbackPositionState by mutableStateOf(0L)
 
     init {
-        val playerState = playerController.queryEpisodeState(episodeUri)
         viewModelScope.launch {
             val episode = episodeStore.episodeWithUri(episodeUri).first()
             val podcast = podcastStore.podcastWithUri(episode.podcastUri).first()
@@ -94,28 +91,22 @@ class PlayerViewModel(
                 summary = episode.summary ?: "",
                 podcastImageUrl = podcast.imageUrl ?: "",
                 url = episode.uri,
-                playerState = playerState,
-                playbackPosition = episode.playbackPosition
+                playbackPosition = episode.playbackPosition,
+                playState = episode.playState,
+                playerAction = episode.playState.toPlayerAction()
 
             )
-        }
 
-        // if episode is playing
-        if (playerState is Playing) {
-            playerController.bind(this)
+            playerController.positionState.collect{
+                uiState = uiState.copy(playbackPosition = it)
+            }
         }
     }
 
-    fun play(playerState: PlayerState): PlayerState {
-        // if episode is going to play for first time
-        if (uiState.playerState !is Playing && playerState is Ready) {
-            playerController.bind(this)
-        }
-        return playerController.play(uiState.toEpisode().copy(playerState = playerState))
-    }
 
-    override fun onChange(position: Long) {
-        uiState = uiState.copy(playbackPosition = position)
+    fun play(playerAction: PlayerAction): PlayerAction {
+        return playerController.play(uiState.toEpisode().copy(
+            playerAction = playerAction, playbackPosition = playbackPositionState))
     }
 
     /**

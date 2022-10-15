@@ -39,7 +39,7 @@ import com.example.jetcaster.data.PodcastFollowedEntry
     version = 1,
     exportSchema = false
 )
-@TypeConverters(DateTimeTypeConverters::class)
+@TypeConverters(DateTimeTypeConverters::class, PlayStateTypeConverters::class)
 abstract class JetcasterDatabase : RoomDatabase() {
     abstract fun podcastsDao(): PodcastsDao
     abstract fun episodesDao(): EpisodesDao
