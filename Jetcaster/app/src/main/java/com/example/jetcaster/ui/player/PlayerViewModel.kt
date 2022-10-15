@@ -27,39 +27,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.savedstate.SavedStateRegistryOwner
 import com.example.jetcaster.Graph
-import com.example.jetcaster.data.Episode
-import com.example.jetcaster.data.EpisodeStore
-import com.example.jetcaster.data.PodcastStore
+import com.example.jetcaster.data.*
 import com.example.jetcaster.play.*
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.Duration
 
-data class PlayerUiState(
-    val title: String = "",
-    val subTitle: String = "",
-    val duration: Duration? = null,
-    val podcastName: String = "",
-    val author: String = "",
-    val summary: String = "",
-    val podcastImageUrl: String = "",
-    val url: String = "",
-    val playState: PlayState = PlayState.PREPARE,
-    val playbackPosition: Long = 0L,
-    val playerAction: PlayerAction = Default
-) {
-    fun toEpisode(): Episode {
-        return Episode(
-            playState = playState,
-            title = title,
-            duration = duration,
-            playbackPosition = playbackPosition,
-            podcastImageUrl = podcastImageUrl,
-            podcastName = podcastName,
-            url = url
-        )
-    }
-}
 
 /**
  * ViewModel that handles the business logic and screen state of the Player screen
@@ -75,38 +48,39 @@ class PlayerViewModel(
     // If that's not the case, fail crashing the app!
     private val episodeUri: String = Uri.decode(savedStateHandle.get<String>("episodeUri")!!)
 
-    var uiState by mutableStateOf(PlayerUiState())
-        private set
+    private val viewModelState = MutableStateFlow(PlayerViewModelState())
+    val uiState = viewModelState.map { it.toUiState() }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            viewModelState.value.toUiState()
+        )
 
-    private var playbackPositionState by mutableStateOf(0L)
+    val playbackPositionState = MutableStateFlow(0L)
 
     init {
         viewModelScope.launch {
-            val episode = episodeStore.episodeWithUri(episodeUri).first()
-            val podcast = podcastStore.podcastWithUri(episode.podcastUri).first()
-            uiState = PlayerUiState(
-                title = episode.title,
-                duration = episode.duration,
-                podcastName = podcast.title,
-                summary = episode.summary ?: "",
-                podcastImageUrl = podcast.imageUrl ?: "",
-                url = episode.uri,
-                playbackPosition = episode.playbackPosition,
-                playState = episode.playState,
-                playerAction = episode.playState.toPlayerAction()
+            episodeStore.episodeWithUri(episodeUri).collect { episode ->
+                podcastStore.podcastWithUri(episode.podcastUri).collect { podcast ->
+                    viewModelState.update { it.copy(episode = episode, podcast = podcast) }
+                    playbackPositionState.update { episode.playbackPosition }
+                }
+            }
 
-            )
-
-            playerController.positionState.collect{
-                uiState = uiState.copy(playbackPosition = it)
+            playerController.positionState.collect { position ->
+                playbackPositionState.update { position }
             }
         }
     }
 
 
-    fun play(playerAction: PlayerAction): PlayerAction {
-        return playerController.play(uiState.toEpisode().copy(
-            playerAction = playerAction, playbackPosition = playbackPositionState))
+    fun play(playerAction: PlayerAction) {
+        return playerController.play(
+            uiState.value.toEpisode().copy(
+                playerAction = playerAction,
+                playbackPosition = playbackPositionState.value
+            )
+        )
     }
 
     /**
@@ -139,6 +113,50 @@ class PlayerViewModel(
 
 }
 
-interface PlaybackPositionListener {
-    fun onChange(position: Long)
+data class PlayerViewModelState(
+    val episode: EpisodeEntity? = null,
+    val podcast: Podcast? = null
+) {
+    fun toUiState(): PlayerUiState {
+        return if (episode == null || podcast == null) {
+            PlayerUiState()
+        } else {
+            println("Player: $episode")
+            PlayerUiState(
+                title = episode.title,
+                duration = episode.duration,
+                podcastName = podcast.title,
+                summary = episode.summary ?: "",
+                podcastImageUrl = podcast.imageUrl ?: "",
+                url = episode.uri,
+                playbackPosition = episode.playbackPosition,
+                playState = episode.playState
+            )
+        }
+    }
+}
+
+data class PlayerUiState(
+    val title: String = "",
+    val subTitle: String = "",
+    val duration: Duration? = null,
+    val podcastName: String = "",
+    val author: String = "",
+    val summary: String = "",
+    val podcastImageUrl: String = "",
+    val url: String = "",
+    val playState: PlayState = PlayState.PREPARE,
+    val playbackPosition: Long = 0L
+) {
+    fun toEpisode(): Episode {
+        return Episode(
+            playState = playState,
+            title = title,
+            duration = duration,
+            playbackPosition = playbackPosition,
+            podcastImageUrl = podcastImageUrl,
+            podcastName = podcastName,
+            url = url
+        )
+    }
 }

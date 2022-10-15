@@ -3,13 +3,12 @@ package com.example.jetcaster.ui.v2.playerBar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetcaster.Graph
-import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.EpisodeToPodcast
-import com.example.jetcaster.play.Default
+import com.example.jetcaster.data.toEpisode
 import com.example.jetcaster.play.PlayerController
-import com.example.jetcaster.play.PlayerAction
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class PlayerBarViewModel(
     private val episodeStore: EpisodeStore = Graph.episodeStore,
@@ -26,37 +25,23 @@ class PlayerBarViewModel(
     )
 
     init {
-//        viewModelScope.launch {
-//            episodeStore.episodeWhichIsPlaying().collect {
-//                episodeToPodcasts ->
-//                episodeToPodcasts.forEach {
-//                    val (episode) = it
-//                    println("episodeToPodcasts : $episode")
-//                }
-//                if (episodeToPodcasts.isNotEmpty()) {
-//                    viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
-//                }
-//            }
-//        }
+        viewModelScope.launch {
+            episodeStore.episodeWhichIsPlaying().collect { episodeToPodcasts ->
+                if (episodeToPodcasts.isNotEmpty()) {
+                    viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
+                }
+            }
+        }
     }
 
-    fun play(playerAction: PlayerAction): PlayerAction {
+    fun play() {
         return when (uiState.value) {
             is PlayerBarUiState.Success -> {
-                val (episodeEntity, podcast) = (uiState.value as PlayerBarUiState.Success).episodeToPodcast
-                val episode = Episode(
-                    url = episodeEntity.uri,
-                    title = episodeEntity.title,
-                    podcastImageUrl = podcast.imageUrl,
-                    podcastName = podcast.title,
-                    playbackPosition = episodeEntity.playbackPosition,
-                    playerAction = playerAction,
-                    playState = episodeEntity.playState,
-                    duration = episodeEntity.duration
-                )
-                controller.play(episode)
+                val episodeToPodcast =
+                    (uiState.value as PlayerBarUiState.Success).episodeToPodcast
+                controller.play(episodeToPodcast.toEpisode())
             }
-            else -> Default
+            else -> {}
         }
     }
 }

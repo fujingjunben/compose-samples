@@ -4,21 +4,17 @@ import android.content.ComponentName
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.example.jetcaster.Graph
 import com.example.jetcaster.data.Episode
-import com.example.jetcaster.data.extension.continuePlayback
-import com.example.jetcaster.data.extension.hasMediaItems
-import com.example.jetcaster.data.extension.play
-import com.example.jetcaster.data.extension.setCurrentEpisode
-import com.example.jetcaster.ui.player.PlaybackPositionListener
+import com.example.jetcaster.data.extension.*
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import java.lang.Runnable
@@ -36,20 +32,22 @@ private data class EpisodeState(
         return this.copy(playState = PlayState.PLAYING)
     }
 
-    fun prepare(): EpisodeState {
-        return this.copy(playState = PlayState.PREPARE)
-    }
     fun position(position: Long): EpisodeState {
         return this.copy(playbackPosition = position)
     }
     fun mediaId(mediaId: String): EpisodeState {
         return this.copy(currentMediaId = mediaId)
     }
+
+    fun updateMedia(episode: Episode): EpisodeState {
+        return this.mediaId(episode.url).position(episode.playbackPosition)
+    }
 }
 
 class PlayerControllerImpl(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
 ) : PlayerController() {
+    private val TAG = "PlayerController"
     private lateinit var controllerFuture: ListenableFuture<MediaController>
     private val mController: MediaController?
         get() = if (controllerFuture.isDone) controllerFuture.get() else null
@@ -66,71 +64,60 @@ class PlayerControllerImpl(
     }
 
     override fun release() {
+        updateEpisode(episodeState.pause())
         releaseController()
     }
 
     /**
      * 上一次播放的状态需要保存，不然每次都是ready
      */
-    override fun play(episode: Episode): PlayerAction {
-        println("playController: $episode")
-        return when (val playerState = episode.playerAction) {
-            is Ready -> {
-                switchEpisode(episode)
-                mController?.play(episode, true)
-                episodeState = episodeState.mediaId(episode.url).playing()
-                Playing
-            }
-            is Playing -> {
-                mController?.pause()
-                episodeState = episodeState.pause()
-                updateEpisode(episodeState)
-                Pause
-            }
-            is Pause -> {
-                switchEpisode(episode)
-                mController?.continuePlayback()
-                episodeState = episodeState.playing()
-                Playing
+    override fun play(episode: Episode) {
+        Log.d(TAG, "$episode")
+        when (val playerState = episode.playerAction) {
+            is Play -> {
+                when (mController?.isPlaying) {
+                    true ->
+                        if (episodeState.currentMediaId == episode.url) {
+                            Log.d(TAG, "pause")
+                            mController?.pause()
+                            updateEpisode(episodeState.pause())
+                        } else {
+                            Log.d(TAG, "switch")
+                            updateEpisode(episodeState.pause(), false)
+                            updateEpisode(episodeState.updateMedia(episode).playing())
+                            mController?.play(episode)
+                        }
+                    else ->
+                        startPlayback(episode)
+                }
             }
             is SeekTo -> {
-                val isPlaying = mController?.isPlaying
-                mController?.pause()
-                switchEpisode(episode)
-                val position = playerState.position
-                mController?.seekTo(position)
-
-                if (isPlaying == true) {
-                    mController?.continuePlayback()
-                    Playing
-                } else {
-                    Pause
-                }
+                mController?.play(episode)
             }
             is SeekBack -> {
                 mController?.seekBack()
-                Playing
             }
             is SeekForward -> {
                 mController?.seekForward()
-                Playing
             }
             else -> playerState
         }
     }
 
-    private fun switchEpisode(episode: Episode){
-        if (episode.url != episodeState.currentMediaId) {
-            mController?.pause()
-            updateEpisode(episodeState.pause(), false)
+    private fun startPlayback(episode: Episode){
+        when(episode.url) {
+            episodeState.currentMediaId -> {
+                Log.d(TAG, "continue")
+                updateEpisode(episodeState.playing())
+                mController?.continuePlayback()
+            }
+            else -> {
+                Log.d(TAG, "start")
+                updateEpisode(episodeState.updateMedia(episode).playing())
+                mController?.play(episode)
+            }
         }
     }
-
-    private var positionListener: PlaybackPositionListener? = null
-    override fun bind(listener: PlaybackPositionListener) {
-        this.positionListener = listener
-    }
-
 
     /* Initializes the MediaController - handles connection to PlayerService under the hood */
     private fun initializeController(context: Context) {
@@ -194,10 +181,8 @@ class PlayerControllerImpl(
         // update progress bar - only if controller is prepared with a media item
         val position = mController?.currentPosition ?: 0L
         positionState.update { position }
-        episodeState = episodeState.copy(playbackPosition = position)
-        positionListener?.onChange(position)
         if (mController?.hasMediaItems() == true) {
-            updateEpisode(episodeState, true)
+            updateEpisode(episodeState.position(position), true)
         }
     }
 
@@ -220,6 +205,7 @@ class PlayerControllerImpl(
     }
 
     private fun updateEpisode(episodeState: EpisodeState, isPlaying: Boolean = true) {
+        this.episodeState = episodeState
         if (mController == null) {
             return
         }

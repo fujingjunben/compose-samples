@@ -19,20 +19,18 @@ package com.example.jetcaster.ui.home.category
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetcaster.Graph
-import com.example.jetcaster.data.CategoryStore
-import com.example.jetcaster.data.EpisodeToPodcast
-import com.example.jetcaster.data.PodcastStore
-import com.example.jetcaster.data.PodcastWithExtraInfo
+import com.example.jetcaster.data.*
+import com.example.jetcaster.play.PlayerController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class PodcastCategoryViewModel(
     private val categoryId: Long,
     private val categoryStore: CategoryStore = Graph.categoryStore,
-    private val podcastStore: PodcastStore = Graph.podcastStore
+    private val podcastStore: PodcastStore = Graph.podcastStore,
+    private val controller: PlayerController = Graph.playerController
 ) : ViewModel() {
     private val _state = MutableStateFlow(PodcastCategoryViewState())
 
@@ -65,6 +63,10 @@ class PodcastCategoryViewModel(
         viewModelScope.launch {
             podcastStore.togglePodcastFollowed(podcastUri)
         }
+    }
+
+    fun play(episodeToPodcast: EpisodeToPodcast){
+        controller.play(episodeToPodcast.toEpisode())
     }
 }
 

@@ -16,6 +16,7 @@ import com.example.jetcaster.ui.Screen
 import com.example.jetcaster.ui.player.PlayerScreen
 import com.example.jetcaster.ui.player.PlayerViewModel
 import com.example.jetcaster.ui.rememberJetcasterAppState
+import com.example.jetcaster.ui.v2.episode.EpisodeScreen
 import com.example.jetcaster.ui.v2.explore.Explore
 import com.example.jetcaster.ui.v2.favourite.Favourite
 import com.example.jetcaster.ui.v2.manage.Manage
@@ -24,7 +25,7 @@ import com.example.jetcaster.ui.v2.manage.Manage
 fun NavGraph(
     navController: NavHostController,
     modifier: Modifier,
-    onPlayerChange: (playerAction: PlayerAction) -> Unit,
+    toPlay: (String) -> Unit,
     finishActivity: () -> Unit = {},
     appState: JetcasterAppState = rememberJetcasterAppState(navController = navController)
 ) {
@@ -44,9 +45,13 @@ fun NavGraph(
             Explore(
                 modifier = modifier,
                 navigateToPlayer = { episodeUri ->
-                    appState.navigateToPlayer(episodeUri, backStackEntry)
-                }
+                    toPlay(episodeUri)
+                },
             )
+        }
+
+        composable(Screen.Episode.route) {backStackEntry ->
+            EpisodeScreen(uri = "")
         }
 
         composable(Screen.Player.route) { backStackEntry ->
@@ -56,7 +61,7 @@ fun NavGraph(
                     defaultArgs = backStackEntry.arguments
                 )
             )
-            PlayerScreen(playerViewModel, onBackPress = appState::navigateBack, onPlayerChange)
+            PlayerScreen(playerViewModel, onBackPress = appState::navigateBack)
         }
         composable(Destination.MANAGE_ROUTE) {
             Manage()

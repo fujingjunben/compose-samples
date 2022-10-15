@@ -46,3 +46,14 @@ class EpisodeToPodcast {
 
     override fun hashCode(): Int = Objects.hash(episode, _podcasts)
 }
+fun EpisodeToPodcast.toEpisode(): Episode {
+    return Episode(
+        playState = episode.playState,
+        playbackPosition = episode.playbackPosition,
+        title = episode.title,
+        url = episode.uri,
+        duration = episode.duration,
+        podcastName = podcast.title,
+        podcastImageUrl = podcast.imageUrl
+    )
+}

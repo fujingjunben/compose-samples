@@ -22,26 +22,24 @@ fun PodcastApp() {
         Tabs.values()
     }
     val navController = rememberNavController()
-    var playerAction by remember {
-        mutableStateOf<PlayerAction>(Default)
-    }
+
     JetcasterTheme {
         Scaffold(
-            bottomBar = { PodcastBottomBar(navController, tabs = tabs, playerAction) }
+            bottomBar = {
+                    PodcastBottomBar(navController, tabs = tabs)
+            }
         ) { paddingValues ->
             NavGraph(
                 navController = navController,
                 modifier = Modifier.padding(paddingValues),
-                onPlayerChange = { nextPlayerState ->
-                    playerAction = nextPlayerState
-                }
+                toPlay = {uri -> {}}
             )
         }
     }
 }
 
 @Composable
-fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>, playerAction: PlayerAction) {
+fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
         ?: Tabs.EXPLORE.route
@@ -49,9 +47,7 @@ fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>, playerActi
     val routes = remember { Tabs.values().map { it.route } }
     if (currentRoute in routes) {
         Column {
-            if (playerAction != Default) {
-                PlayerBar(playerAction)
-            }
+            PlayerBar(navController = navController)
             BottomNavigation(
                 Modifier.windowInsetsBottomHeight(
                     WindowInsets.navigationBars.add(WindowInsets(bottom = 56.dp))

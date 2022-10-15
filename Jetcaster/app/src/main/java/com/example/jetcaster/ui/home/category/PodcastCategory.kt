@@ -45,6 +45,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.rounded.PauseCircleFilled
 import androidx.compose.material.icons.rounded.PlayCircleFilled
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
@@ -76,6 +77,8 @@ import com.example.jetcaster.data.EpisodeEntity
 import com.example.jetcaster.data.EpisodeToPodcast
 import com.example.jetcaster.data.Podcast
 import com.example.jetcaster.data.PodcastWithExtraInfo
+import com.example.jetcaster.play.PlayState
+import com.example.jetcaster.play.PlayerAction
 import com.example.jetcaster.ui.home.PreviewEpisodes
 import com.example.jetcaster.ui.home.PreviewPodcasts
 import com.example.jetcaster.ui.theme.JetcasterTheme
@@ -108,7 +111,7 @@ fun PodcastCategory(
      */
     Column(modifier = modifier) {
         CategoryPodcasts(viewState.topPodcasts, viewModel)
-        EpisodeList(viewState.episodes, navigateToPlayer)
+        EpisodeList(viewState.episodes, navigateToPlayer, viewModel::play)
     }
 }
 
@@ -127,7 +130,8 @@ private fun CategoryPodcasts(
 @Composable
 private fun EpisodeList(
     episodes: List<EpisodeToPodcast>,
-    navigateToPlayer: (String) -> Unit
+    navigateToPlayer: (String) -> Unit,
+    onPlay: (EpisodeToPodcast) -> Unit
 ) {
     LazyColumn(
         contentPadding = PaddingValues(0.dp),
@@ -139,6 +143,7 @@ private fun EpisodeList(
                 episode = item.episode,
                 podcast = item.podcast,
                 onClick = navigateToPlayer,
+                onPlay = { onPlay(item)},
                 modifier = Modifier.fillParentMaxWidth()
             )
         }
@@ -150,6 +155,7 @@ fun EpisodeListItem(
     episode: EpisodeEntity,
     podcast: Podcast,
     onClick: (String) -> Unit,
+    onPlay: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ConstraintLayout(modifier = modifier.clickable { onClick(episode.uri) }) {
@@ -225,9 +231,10 @@ fun EpisodeListItem(
                 }
             )
         }
-
+        val icon =
+            if (episode.playState == PlayState.PLAYING) Icons.Rounded.PauseCircleFilled else Icons.Rounded.PlayCircleFilled
         Image(
-            imageVector = Icons.Rounded.PlayCircleFilled,
+            imageVector = icon,
             contentDescription = stringResource(R.string.cd_play),
             contentScale = ContentScale.Fit,
             colorFilter = ColorFilter.tint(LocalContentColor.current),
@@ -235,7 +242,7 @@ fun EpisodeListItem(
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = rememberRipple(bounded = false, radius = 24.dp)
-                ) { /* TODO */ }
+                ) { onPlay() }
                 .size(48.dp)
                 .padding(6.dp)
                 .semantics { role = Role.Button }
@@ -393,7 +400,8 @@ fun PreviewEpisodeListItem() {
             episode = PreviewEpisodes[0],
             podcast = PreviewPodcasts[0],
             onClick = { },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            onPlay = {  }
         )
     }
 }

@@ -90,6 +90,7 @@ private fun buildMediaItem(episode: Episode, streaming: Boolean): MediaItem {
         setArtworkUri(episode.podcastImageUrl?.toUri())
     }.build()
     return MediaItem.Builder().apply {
+        setMediaId(source)
         setRequestMetadata(requestMetadata)
         setMediaMetadata(mediaMetadata)
         setUri(source.toUri())
