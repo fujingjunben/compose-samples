@@ -31,18 +31,18 @@ class PlayerBarViewModel(
     )
 
     init {
-        viewModelScope.launch {
-            episodeStore.episodeWhichIsPlaying().collect {
-                episodeToPodcasts ->
-                episodeToPodcasts.forEach {
-                    val (episode) = it
-                    println("episodeToPodcasts : $episode")
-                }
-                if (episodeToPodcasts.isNotEmpty()) {
-                    viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
-                }
-            }
-        }
+//        viewModelScope.launch {
+//            episodeStore.episodeWhichIsPlaying().collect {
+//                episodeToPodcasts ->
+//                episodeToPodcasts.forEach {
+//                    val (episode) = it
+//                    println("episodeToPodcasts : $episode")
+//                }
+//                if (episodeToPodcasts.isNotEmpty()) {
+//                    viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
+//                }
+//            }
+//        }
     }
 
     fun play(playerState: PlayerState): PlayerState {

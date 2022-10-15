@@ -55,13 +55,18 @@ class PlayerControllerImpl(
         releaseController()
     }
 
+    /**
+     * 上一次播放的状态需要保存，不然每次都是ready
+     */
     override fun play(episode: Episode): PlayerState {
+        println("playController: $episode")
         return when (val playerState = episode.playerState) {
             is Ready -> {
                 if (episode.url != episodeState.currentMediaId) {
+                    mController?.pause()
                     updateEpisode(episodeState.copy(playerState = Pause))
                 }
-                mController?.play(episode)
+                mController?.play(episode, true)
                 episodeState = episodeState.copy(currentMediaId = episode.url, playerState = Playing)
                 Playing
             }

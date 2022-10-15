@@ -80,8 +80,7 @@ class PlayerViewModel(
     var uiState by mutableStateOf(PlayerUiState())
         private set
 
-    var playbackPosition by mutableStateOf(0L)
-        private set
+    private var playbackPosition by mutableStateOf(0L)
 
     init {
         val playerState = playerController.queryEpisodeState(episodeUri)
@@ -95,9 +94,10 @@ class PlayerViewModel(
                 summary = episode.summary ?: "",
                 podcastImageUrl = podcast.imageUrl ?: "",
                 url = episode.uri,
-                playerState = playerState
+                playerState = playerState,
+                playbackPosition = episode.playbackPosition
+
             )
-            playbackPosition = episode.playbackPosition
         }
 
         // if episode is playing
@@ -115,7 +115,7 @@ class PlayerViewModel(
     }
 
     override fun onChange(position: Long) {
-        playbackPosition = position
+        uiState = uiState.copy(playbackPosition = position)
     }
 
     /**

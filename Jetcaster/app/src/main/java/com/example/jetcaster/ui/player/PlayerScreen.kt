@@ -86,12 +86,11 @@ fun PlayerScreen(
     onPlayerChange: (playerState: PlayerState) -> Unit,
 ) {
     val uiState = viewModel.uiState
-    val paybackPositionState = viewModel.playbackPosition
     PlayerScreen(uiState, onBackPress, play = { playerState ->
         val nextPlayerState = viewModel.play(playerState)
         onPlayerChange(nextPlayerState)
         nextPlayerState
-    }, paybackPositionState)
+    })
 }
 
 /**
@@ -102,12 +101,11 @@ private fun PlayerScreen(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
     play: (playerState: PlayerState) -> PlayerState,
-    paybackPositionState: Long,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier) {
         if (uiState.podcastName.isNotEmpty()) {
-            PlayerContent(uiState, onBackPress, play, paybackPositionState)
+            PlayerContent(uiState, onBackPress, play)
         } else {
             FullScreenLoading(modifier)
         }
@@ -119,10 +117,9 @@ fun PlayerContent(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
     play: (playState: PlayerState) -> PlayerState,
-    playbackPositionState: Long
 ) {
     PlayerDynamicTheme(uiState.podcastImageUrl) {
-        PlayerContentRegular(uiState, onBackPress, play, playbackPositionState)
+        PlayerContentRegular(uiState, onBackPress, play)
     }
 }
 
@@ -130,8 +127,7 @@ fun PlayerContent(
 private fun PlayerContentRegular(
     uiState: PlayerUiState,
     onBackPress: () -> Unit,
-    play: (playState: PlayerState) -> PlayerState,
-    playbackPositionState: Long
+    play: (playState: PlayerState) -> PlayerState
 ) {
     Column(
         modifier = Modifier
@@ -161,7 +157,7 @@ private fun PlayerContentRegular(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(10f)
             ) {
-                PlayerSlider(uiState, play, playbackPositionState)
+                PlayerSlider(uiState, play, uiState.playbackPosition)
                 PlayerButtons(
                     Modifier.padding(vertical = 8.dp),
                     playState = uiState.playerState,
