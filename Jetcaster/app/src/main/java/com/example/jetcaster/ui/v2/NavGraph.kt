@@ -10,7 +10,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.jetcaster.R
-import com.example.jetcaster.play.PlayerAction
 import com.example.jetcaster.ui.JetcasterAppState
 import com.example.jetcaster.ui.Screen
 import com.example.jetcaster.ui.player.PlayerScreen
@@ -33,7 +32,7 @@ fun NavGraph(
         composable(Destination.FAVOURITE_ROUTE) { backStackEntry ->
             Favourite(
                 navigateToPlayer = { episodeUri ->
-                    appState.navigateToPlayer(episodeUri, backStackEntry)
+                    toPlay(episodeUri)
                 }
             )
         }

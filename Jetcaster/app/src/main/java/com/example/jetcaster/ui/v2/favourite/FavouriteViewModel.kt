@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetcaster.Graph
 import com.example.jetcaster.data.*
+import com.example.jetcaster.play.PlayerController
+import com.example.jetcaster.ui.v2.common.EpisodeOfPodcast
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,7 +14,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class FavouriteViewModel(
     private val podcastStore: PodcastStore = Graph.podcastStore,
-    private val episodeStore: EpisodeStore = Graph.episodeStore
+    private val episodeStore: EpisodeStore = Graph.episodeStore,
+    private val controller: PlayerController = Graph.playerController
 ) : ViewModel() {
 
     private val viewModelState = MutableStateFlow(FavouriteViewModelState(isLoading = true))
@@ -63,6 +66,9 @@ class FavouriteViewModel(
         }
     }
 
+    fun play(episodeOfPodcast: EpisodeOfPodcast){
+        controller.play(episodeOfPodcast.toEpisode())
+    }
 }
 
 data class FavouriteViewModelState(
@@ -87,8 +93,3 @@ sealed interface FavouriteUiState {
 
     object Loading : FavouriteUiState
 }
-
-data class EpisodeOfPodcast(
-    val podcast: Podcast,
-    val episode: EpisodeEntity
-)

@@ -19,8 +19,11 @@ package com.example.jetcaster.ui.home.category
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetcaster.Graph
-import com.example.jetcaster.data.*
+import com.example.jetcaster.data.CategoryStore
+import com.example.jetcaster.data.PodcastStore
+import com.example.jetcaster.data.PodcastWithExtraInfo
 import com.example.jetcaster.play.PlayerController
+import com.example.jetcaster.ui.v2.common.EpisodeOfPodcast
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -53,7 +56,9 @@ class PodcastCategoryViewModel(
             combine(recentPodcastsFlow, episodesFlow) { topPodcasts, episodes ->
                 PodcastCategoryViewState(
                     topPodcasts = topPodcasts,
-                    episodes = episodes
+                    episodes = episodes.map { episodeToPodcast ->
+                        EpisodeOfPodcast(episodeToPodcast.podcast, episodeToPodcast.episode)
+                    }
                 )
             }.collect { _state.value = it }
         }
@@ -65,12 +70,12 @@ class PodcastCategoryViewModel(
         }
     }
 
-    fun play(episodeToPodcast: EpisodeToPodcast){
-        controller.play(episodeToPodcast.toEpisode())
+    fun play(episodeOfPodcast: EpisodeOfPodcast) {
+        controller.play(episodeOfPodcast.toEpisode())
     }
 }
 
 data class PodcastCategoryViewState(
     val topPodcasts: List<PodcastWithExtraInfo> = emptyList(),
-    val episodes: List<EpisodeToPodcast> = emptyList()
+    val episodes: List<EpisodeOfPodcast> = emptyList()
 )
