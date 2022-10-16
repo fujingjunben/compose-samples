@@ -32,6 +32,10 @@ private data class EpisodeState(
         return this.copy(playState = PlayState.PLAYING)
     }
 
+    fun prepare(): EpisodeState {
+        return this.copy(playState = PlayState.PREPARE)
+    }
+
     fun position(position: Long): EpisodeState {
         return this.copy(playbackPosition = position)
     }
@@ -213,9 +217,13 @@ class PlayerControllerImpl(
         if (episodeState.currentMediaId.isEmpty()) {
             return
         }
-
+        val isFinished = episodeState.playbackPosition >= mController!!.duration - 500
         val position =
-            if (episodeState.playbackPosition >= mController!!.duration - 500) 0L else episodeState.playbackPosition
+            if (isFinished) 0L else episodeState.playbackPosition
+
+        if (isFinished) {
+            this.episodeState = episodeState.prepare()
+        }
 
         scope.launch {
             val episode = episodeStore.episodeWithUri(episodeState.currentMediaId).first()
