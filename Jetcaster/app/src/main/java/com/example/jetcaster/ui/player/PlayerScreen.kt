@@ -84,9 +84,8 @@ fun PlayerScreen(
     viewModel: PlayerViewModel,
     onBackPress: () -> Unit,
 ) {
-    val uiState = viewModel.uiState.collectAsState()
-    val playbackPosition = viewModel.playbackPositionState.collectAsState()
-    PlayerScreen(uiState.value, playbackPosition.value, onBackPress, play = { playerAction ->
+    val uiState = viewModel.uiState
+    PlayerScreen(uiState, uiState.playbackPosition, onBackPress, play = { playerAction ->
         viewModel.play(playerAction)
     })
 }
