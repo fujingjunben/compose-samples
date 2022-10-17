@@ -36,18 +36,18 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 
 @Composable
 fun Home(
+    modifier: Modifier,
     navigateToPlayer: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
     HomeContent(
         navigateToPlayer = navigateToPlayer,
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.systemBarsPadding(),
         refresh = viewModel::forceRefresh
     )
 }
 
 
-@OptIn(ExperimentalPagerApi::class) // HorizontalPager is experimental
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,

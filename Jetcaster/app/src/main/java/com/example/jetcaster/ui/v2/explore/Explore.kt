@@ -11,7 +11,5 @@ fun Explore(
     modifier: Modifier,
     navigateToPlayer: (String) -> Unit
 ) {
-    Surface(modifier = Modifier.systemBarsPadding()) {
-        Home(navigateToPlayer = navigateToPlayer)
-    }
+    Home(modifier, navigateToPlayer = navigateToPlayer)
 }

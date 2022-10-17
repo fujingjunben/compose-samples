@@ -48,6 +48,7 @@ class FavouriteViewModel(
                                 EpisodeOfPodcast(podcast, episodeEntity)
                             }
                         }.flatten()
+                            .sortedByDescending { episodeOfPodcast -> episodeOfPodcast.episode.published }
                     }
                 }.collect { episodeOfPodcasts ->
                     viewModelState.update {
@@ -66,7 +67,7 @@ class FavouriteViewModel(
         }
     }
 
-    fun play(episodeOfPodcast: EpisodeOfPodcast){
+    fun play(episodeOfPodcast: EpisodeOfPodcast) {
         controller.play(episodeOfPodcast.toEpisode())
     }
 }

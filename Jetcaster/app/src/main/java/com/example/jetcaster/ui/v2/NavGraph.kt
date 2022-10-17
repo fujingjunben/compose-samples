@@ -31,6 +31,7 @@ fun NavGraph(
     NavHost(navController = navController, startDestination = Destination.EXPLORE_ROUTE) {
         composable(Destination.FAVOURITE_ROUTE) { backStackEntry ->
             Favourite(
+                modifier = modifier,
                 navigateToPlayer = { episodeUri ->
                     toPlay(episodeUri)
                 }

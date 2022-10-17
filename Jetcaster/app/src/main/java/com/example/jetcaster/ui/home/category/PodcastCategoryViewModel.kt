@@ -19,20 +19,19 @@ package com.example.jetcaster.ui.home.category
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetcaster.Graph
-import com.example.jetcaster.data.CategoryStore
-import com.example.jetcaster.data.PodcastStore
-import com.example.jetcaster.data.PodcastWithExtraInfo
+import com.example.jetcaster.data.*
 import com.example.jetcaster.play.PlayerController
 import com.example.jetcaster.ui.v2.common.EpisodeOfPodcast
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PodcastCategoryViewModel(
     private val categoryId: Long,
     private val categoryStore: CategoryStore = Graph.categoryStore,
     private val podcastStore: PodcastStore = Graph.podcastStore,
+    private val episodeStore: EpisodeStore = Graph.episodeStore,
     private val controller: PlayerController = Graph.playerController
 ) : ViewModel() {
     private val _state = MutableStateFlow(PodcastCategoryViewState())
@@ -45,19 +44,35 @@ class PodcastCategoryViewModel(
             val recentPodcastsFlow = categoryStore.podcastsInCategorySortedByPodcastCount(
                 categoryId,
                 limit = 10
-            )
+            ).map { podcastWithExtraInfos ->
+                podcastWithExtraInfos.filter { !it.isFollowed }
+            }
 
-            val episodesFlow = categoryStore.episodesFromPodcastsInCategory(
-                categoryId,
-                limit = 20
-            )
+
+            val episodesFlow = recentPodcastsFlow.flatMapLatest { podcasts ->
+                val episodeAndPodcasts: List<Flow<List<Pair<Podcast, EpisodeEntity>>>> =
+                    podcasts.map { podcastWithExtraInfo ->
+                        episodeStore.episodesInPodcast(
+                            podcastWithExtraInfo.podcast.uri,
+                            limit = 20
+                        ).map { episodeEntityList: List<EpisodeEntity> ->
+                            episodeEntityList.map { episodeEntity ->
+                                podcastWithExtraInfo.podcast to episodeEntity
+                            }
+                        }
+                    }
+
+                combine(episodeAndPodcasts) { group: Array<List<Pair<Podcast, EpisodeEntity>>> ->
+                    group.map { it }.flatten()
+                }
+            }
 
             // Combine our flows and collect them into the view state StateFlow
             combine(recentPodcastsFlow, episodesFlow) { topPodcasts, episodes ->
                 PodcastCategoryViewState(
                     topPodcasts = topPodcasts,
-                    episodes = episodes.map { episodeToPodcast ->
-                        EpisodeOfPodcast(episodeToPodcast.podcast, episodeToPodcast.episode)
+                    episodes = episodes.map { (podcast, episode)->
+                        EpisodeOfPodcast(podcast, episode)
                     }
                 )
             }.collect { _state.value = it }

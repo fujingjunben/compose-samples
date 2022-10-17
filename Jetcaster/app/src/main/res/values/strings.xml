@@ -57,5 +57,7 @@
     <string name="favourite">Favourite</string>
     <string name="manage">Manage</string>
     <string name="explore">Explore</string>
+    <string name="follow">Follow</string>
+    <string name="more">More</string>
 
 </resources>

@@ -2,6 +2,8 @@ package com.example.jetcaster.ui.v2.favourite
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -12,28 +14,30 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.jetcaster.R
+import com.example.jetcaster.data.Podcast
 import com.example.jetcaster.ui.v2.common.EpisodeList
+import com.example.jetcaster.util.ToggleFollowPodcastIconButton
 
 @Composable
 fun Favourite(
+    modifier: Modifier,
     navigateToPlayer: (String) -> Unit,
     viewModel: FavouriteViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .systemBarsPadding()
-            .navigationBarsPadding()
-            .windowInsetsPadding(
-                WindowInsets.systemBars
-            )
     ) {
         val appBarColor = MaterialTheme.colors.surface.copy(alpha = 0.87f)
         FavouriteAppBar(
@@ -51,8 +55,13 @@ fun Favourite(
                 }
             }
             is FavouriteUiState.Success -> {
+                val episodeOfPodcasts = (uiState as FavouriteUiState.Success).episodeOfPodcasts
+                FollowedPodcasts(
+                    podcasts = episodeOfPodcasts.map { it.podcast }.distinctBy { it.uri },
+                    onPodcastUnfollowed = viewModel::onPodcastUnfollowed
+                )
                 EpisodeList(
-                    (uiState as FavouriteUiState.Success).episodeOfPodcasts,
+                    episodeOfPodcasts,
                     navigateToPlayer,
                     viewModel::play
                 )
@@ -105,4 +114,71 @@ fun FavouriteAppBar(
         },
         modifier = modifier
     )
+}
+
+@Composable
+fun FollowedPodcasts(
+    modifier: Modifier = Modifier,
+    podcasts: List<Podcast>,
+    onPodcastUnfollowed: (String) -> Unit,
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = stringResource(id = R.string.follow))
+            Text(text = stringResource(id = R.string.more))
+        }
+        LazyRow(modifier = modifier.height(100.dp)) {
+            items(podcasts, key = { podcast -> podcast.uri }) { podcast ->
+                FollowedPodcastCarouselItem(
+                    podcastImageUrl = podcast.imageUrl,
+                    podcastTitle = podcast.title,
+                    onUnfollowedClick = { onPodcastUnfollowed(podcast.uri) },
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .fillMaxHeight()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FollowedPodcastCarouselItem(
+    modifier: Modifier = Modifier,
+    podcastImageUrl: String? = null,
+    podcastTitle: String? = null,
+    onUnfollowedClick: () -> Unit,
+) {
+    Column(
+        modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Box(
+            Modifier
+                .weight(1f)
+                .align(Alignment.CenterHorizontally)
+                .aspectRatio(1f)
+        ) {
+            if (podcastImageUrl != null) {
+                AsyncImage(
+                    model = podcastImageUrl,
+                    contentDescription = podcastTitle,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(MaterialTheme.shapes.medium),
+                )
+            }
+
+            ToggleFollowPodcastIconButton(
+                onClick = onUnfollowedClick,
+                isFollowed = true, /* All podcasts are followed in this feed */
+                modifier = Modifier.align(Alignment.BottomEnd)
+            )
+        }
+    }
 }
