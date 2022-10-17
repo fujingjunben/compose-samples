@@ -1,5 +1,6 @@
 package com.example.jetcaster.ui.v2.playerBar
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jetcaster.Graph
@@ -27,6 +28,10 @@ class PlayerBarViewModel(
     init {
         viewModelScope.launch {
             episodeStore.episodeWhichIsPlaying().collect { episodeToPodcasts ->
+                debug("episodde: ${episodeToPodcasts.size}")
+                episodeToPodcasts.forEach {
+                    debug("$it")
+                }
                 if (episodeToPodcasts.isNotEmpty()) {
                     viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
                 }
@@ -42,6 +47,13 @@ class PlayerBarViewModel(
                 controller.play(episodeToPodcast.toEpisode())
             }
             else -> {}
+        }
+    }
+
+    companion object {
+        const val TAG = "PlayerBar"
+        fun debug(msg: String){
+            Log.d(TAG, msg)
         }
     }
 }

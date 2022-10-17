@@ -84,19 +84,19 @@ class PlayerControllerImpl(
                         if (episodeState.currentMediaId == episode.url) {
                             Log.d(TAG, "pause")
                             mController?.pause()
-                            updateEpisode(episodeState.pause())
+                            pauseEpisode()
                         } else {
                             Log.d(TAG, "switch")
-                            updateEpisode(episodeState.pause(), false)
-                            updateEpisode(episodeState.updateMedia(episode).playing())
-                            mController?.play(episode)
+                            pauseEpisode()
+                            playingEpisode(episodeState.updateMedia(episode))
+                            mController?.play(episode, true)
                         }
                     else ->
                         startPlayback(episode)
                 }
             }
             is SeekTo -> {
-                mController?.play(episode)
+                mController?.play(episode, true)
             }
             is SeekBack -> {
                 mController?.seekBack()
@@ -112,15 +112,24 @@ class PlayerControllerImpl(
         when(episode.url) {
             episodeState.currentMediaId -> {
                 Log.d(TAG, "continue")
-                updateEpisode(episodeState.playing())
+                playingEpisode(episodeState)
                 mController?.continuePlayback()
             }
             else -> {
                 Log.d(TAG, "start")
-                updateEpisode(episodeState.updateMedia(episode).playing())
-                mController?.play(episode)
+                pauseEpisode()
+                playingEpisode(episodeState.updateMedia(episode))
+                mController?.play(episode, true)
             }
         }
+    }
+
+    private fun pauseEpisode(){
+        updateEpisode(episodeState.pause(), false)
+    }
+
+    private fun playingEpisode(episodeState: EpisodeState) {
+        updateEpisode(episodeState.playing(), true)
     }
 
     /* Initializes the MediaController - handles connection to PlayerService under the hood */
@@ -208,7 +217,7 @@ class PlayerControllerImpl(
         }
     }
 
-    private fun updateEpisode(episodeState: EpisodeState, isPlaying: Boolean = true) {
+    private fun updateEpisode(episodeState: EpisodeState, isPlaying: Boolean = false) {
         this.episodeState = episodeState
         if (mController == null) {
             return
