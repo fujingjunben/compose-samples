@@ -42,7 +42,9 @@ fun Home(
 ) {
     HomeContent(
         navigateToPlayer = navigateToPlayer,
-        modifier = modifier.systemBarsPadding(),
+        modifier = modifier
+            .systemBarsPadding()
+            .navigationBarsPadding(),
         refresh = viewModel::forceRefresh
     )
 }
@@ -53,13 +55,9 @@ fun HomeContent(
     modifier: Modifier = Modifier,
     navigateToPlayer: (String) -> Unit,
     refresh: () -> Unit,
-    ) {
+) {
     Column(
         modifier = modifier
-            .windowInsetsPadding(
-                WindowInsets.systemBars
-            )
-            .navigationBarsPadding()
     ) {
         val appBarColor = MaterialTheme.colors.surface.copy(alpha = 0.87f)
         HomeAppBar(

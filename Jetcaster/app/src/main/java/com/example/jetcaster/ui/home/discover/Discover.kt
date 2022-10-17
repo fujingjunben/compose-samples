@@ -41,8 +41,6 @@ fun Discover(
 
     if (viewState.categories.isNotEmpty() && selectedCategory != null) {
         Column(modifier) {
-            Spacer(Modifier.height(8.dp))
-
             PodcastCategoryTabs(
                 categories = viewState.categories,
                 selectedCategory = selectedCategory,

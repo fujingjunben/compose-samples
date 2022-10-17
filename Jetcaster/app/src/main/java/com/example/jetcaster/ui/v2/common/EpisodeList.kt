@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -46,13 +48,16 @@ import java.time.format.FormatStyle
 fun EpisodeList(
     episodes: List<EpisodeOfPodcast>,
     navigateToPlayer: (String) -> Unit,
-    onPlay: (EpisodeOfPodcast) -> Unit
+    onPlay: (EpisodeOfPodcast) -> Unit,
+    header: @Composable LazyItemScope.() -> Unit = {}
 ) {
     LazyColumn(
         contentPadding = PaddingValues(0.dp),
         verticalArrangement = Arrangement.Center
     ) {
-
+        item {
+            header(this)
+        }
         items(episodes, key = { it.episode.uri }) { item ->
             EpisodeListItem(
                 episode = item.episode,

@@ -2,6 +2,7 @@ package com.example.jetcaster.ui.v2.favourite
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
@@ -56,15 +57,17 @@ fun Favourite(
             }
             is FavouriteUiState.Success -> {
                 val episodeOfPodcasts = (uiState as FavouriteUiState.Success).episodeOfPodcasts
-                FollowedPodcasts(
-                    podcasts = episodeOfPodcasts.map { it.podcast }.distinctBy { it.uri },
-                    onPodcastUnfollowed = viewModel::onPodcastUnfollowed
-                )
+
                 EpisodeList(
                     episodeOfPodcasts,
                     navigateToPlayer,
-                    viewModel::play
-                )
+                    viewModel::play,
+                ) {
+                    FollowedPodcasts(
+                        podcasts = episodeOfPodcasts.map { it.podcast }.distinctBy { it.uri },
+                        onPodcastUnfollowed = viewModel::onPodcastUnfollowed
+                    )
+                }
             }
         }
     }
@@ -117,7 +120,7 @@ fun FavouriteAppBar(
 }
 
 @Composable
-fun FollowedPodcasts(
+fun LazyItemScope.FollowedPodcasts(
     modifier: Modifier = Modifier,
     podcasts: List<Podcast>,
     onPodcastUnfollowed: (String) -> Unit,
@@ -132,7 +135,7 @@ fun FollowedPodcasts(
             Text(text = stringResource(id = R.string.follow))
             Text(text = stringResource(id = R.string.more))
         }
-        LazyRow(modifier = modifier.height(100.dp)) {
+        LazyRow(modifier = modifier.height(150.dp)) {
             items(podcasts, key = { podcast -> podcast.uri }) { podcast ->
                 FollowedPodcastCarouselItem(
                     podcastImageUrl = podcast.imageUrl,
