@@ -1,5 +1,6 @@
 package com.example.jetcaster.ui.v2
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -7,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.jetcaster.R
 import com.example.jetcaster.ui.JetcasterAppState
 import com.example.jetcaster.ui.Screen
@@ -19,6 +22,7 @@ import com.example.jetcaster.ui.v2.episode.EpisodeScreen
 import com.example.jetcaster.ui.v2.explore.Explore
 import com.example.jetcaster.ui.v2.favourite.Favourite
 import com.example.jetcaster.ui.v2.manage.Manage
+import com.example.jetcaster.ui.v2.podcast.PodcastScreen
 
 @Composable
 fun NavGraph(
@@ -32,8 +36,11 @@ fun NavGraph(
         composable(Destination.FAVOURITE_ROUTE) { backStackEntry ->
             Favourite(
                 modifier = modifier,
-                navigateToPlayer = { episodeUri ->
-                    toPlay(episodeUri)
+                navigateToEpisode = { episodeUri ->
+                    appState.navigateToEpisode(episodeUri, backStackEntry)
+                },
+                navigateToPodcast = { podcastUri ->
+                    appState.navigateToPodcast(podcastUri, backStackEntry)
                 }
             )
         }
@@ -44,14 +51,32 @@ fun NavGraph(
 
             Explore(
                 modifier = modifier,
-                navigateToPlayer = { episodeUri ->
-                    toPlay(episodeUri)
+                navigateToEpisode = { episodeUri ->
+                    appState.navigateToEpisode(episodeUri, backStackEntry)
                 },
+                navigateToPodcast = { podcastUri ->
+                    appState.navigateToPodcast(podcastUri, backStackEntry)
+                }
             )
         }
 
-        composable(Screen.Episode.route) {backStackEntry ->
-            EpisodeScreen(uri = "")
+        composable(Screen.Episode.route) { backStackEntry ->
+            val arguments = requireNotNull(backStackEntry.arguments)
+            val episodeUri = Uri.decode(arguments.getString(Destination.EPISODE))
+            EpisodeScreen(
+                uri = episodeUri!!,
+                onBackPress = appState::navigateBack,
+                modifier = Modifier
+            )
+        }
+        composable(Screen.Podcast.route) { backStackEntry ->
+            val arguments = requireNotNull(backStackEntry.arguments)
+            val uri = Uri.decode(arguments.getString(Destination.PODCAST))
+            PodcastScreen(
+                podcastUri = uri!!,
+                onBackPress = appState::navigateBack,
+                modifier = Modifier
+            )
         }
 
         composable(Screen.Player.route) { backStackEntry ->
@@ -83,4 +108,6 @@ object Destination {
     const val FAVOURITE_ROUTE = "favourite"
     const val EXPLORE_ROUTE = "explore"
     const val MANAGE_ROUTE = "manage"
+    const val EPISODE = "episodeUri"
+    const val PODCAST = "podcastUri"
 }

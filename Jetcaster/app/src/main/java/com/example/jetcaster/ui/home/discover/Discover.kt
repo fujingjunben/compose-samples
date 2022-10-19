@@ -31,7 +31,8 @@ import com.example.jetcaster.ui.theme.Keyline1
 
 @Composable
 fun Discover(
-    navigateToPlayer: (String) -> Unit,
+    navigateToEpisode: (String) -> Unit,
+    navigateToPodcast: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel: DiscoverViewModel = viewModel()
@@ -61,7 +62,8 @@ fun Discover(
                  */
                 PodcastCategory(
                     categoryId = category.id,
-                    navigateToPlayer = navigateToPlayer,
+                    navigateToEpisode = navigateToEpisode,
+                    navigateToPodcast = navigateToPodcast,
                     modifier = Modifier.fillMaxSize()
                 )
             }

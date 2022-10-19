@@ -16,6 +16,7 @@
 
 package com.example.jetcaster.ui.home.category
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -44,7 +45,8 @@ import com.example.jetcaster.util.viewModelProviderFactoryOf
 @Composable
 fun PodcastCategory(
     categoryId: Long,
-    navigateToPlayer: (String) -> Unit,
+    navigateToEpisode: (String) -> Unit,
+    navigateToPodcast: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     /**
@@ -63,19 +65,21 @@ fun PodcastCategory(
      * TODO: reset scroll position when category changes
      */
     Column(modifier = modifier) {
-        CategoryPodcasts(viewState.topPodcasts, viewModel)
-        EpisodeList(viewState.episodes, navigateToPlayer, viewModel::play)
+        CategoryPodcasts(viewState.topPodcasts, navigateToPodcast, viewModel)
+        EpisodeList(viewState.episodes, navigateToEpisode, viewModel::play)
     }
 }
 
 @Composable
 private fun CategoryPodcasts(
     topPodcasts: List<PodcastWithExtraInfo>,
+    navigateToPodcast: (String) -> Unit,
     viewModel: PodcastCategoryViewModel
 ) {
     CategoryPodcastRow(
         podcasts = topPodcasts,
         onTogglePodcastFollowed = viewModel::onTogglePodcastFollowed,
+        navigateToPodcast = navigateToPodcast,
         modifier = Modifier.fillMaxWidth()
     )
 }
@@ -84,6 +88,7 @@ private fun CategoryPodcasts(
 private fun CategoryPodcastRow(
     podcasts: List<PodcastWithExtraInfo>,
     onTogglePodcastFollowed: (String) -> Unit,
+    navigateToPodcast: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val lastIndex = podcasts.size - 1
@@ -96,6 +101,7 @@ private fun CategoryPodcastRow(
                 podcastTitle = podcast.title,
                 podcastImageUrl = podcast.imageUrl,
                 isFollowed = isFollowed,
+                navigateToPodcast = {navigateToPodcast(podcast.uri)},
                 onToggleFollowClicked = { onTogglePodcastFollowed(podcast.uri) },
                 modifier = Modifier.width(128.dp)
             )
@@ -110,6 +116,7 @@ private fun TopPodcastRowItem(
     podcastTitle: String,
     isFollowed: Boolean,
     modifier: Modifier = Modifier,
+    navigateToPodcast: () -> Unit,
     onToggleFollowClicked: () -> Unit,
     podcastImageUrl: String? = null,
 ) {
@@ -132,7 +139,8 @@ private fun TopPodcastRowItem(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(MaterialTheme.shapes.medium),
+                        .clip(MaterialTheme.shapes.medium)
+                        .clickable { navigateToPodcast() }
                 )
             }
 

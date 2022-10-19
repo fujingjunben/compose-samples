@@ -1,6 +1,7 @@
 package com.example.jetcaster.ui.v2.favourite
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -31,7 +32,8 @@ import com.example.jetcaster.util.ToggleFollowPodcastIconButton
 @Composable
 fun Favourite(
     modifier: Modifier,
-    navigateToPlayer: (String) -> Unit,
+    navigateToEpisode: (String) -> Unit,
+    navigateToPodcast: (String) -> Unit,
     viewModel: FavouriteViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -60,11 +62,12 @@ fun Favourite(
 
                 EpisodeList(
                     episodeOfPodcasts,
-                    navigateToPlayer,
+                    navigateToEpisode,
                     viewModel::play,
                 ) {
                     FollowedPodcasts(
                         podcasts = episodeOfPodcasts.map { it.podcast }.distinctBy { it.uri },
+                        navigateToPodcast = navigateToPodcast,
                         onPodcastUnfollowed = viewModel::onPodcastUnfollowed
                     )
                 }
@@ -123,6 +126,7 @@ fun FavouriteAppBar(
 fun LazyItemScope.FollowedPodcasts(
     modifier: Modifier = Modifier,
     podcasts: List<Podcast>,
+    navigateToPodcast: (String) -> Unit,
     onPodcastUnfollowed: (String) -> Unit,
 ) {
     Column(modifier = modifier) {
@@ -141,6 +145,7 @@ fun LazyItemScope.FollowedPodcasts(
                     podcastImageUrl = podcast.imageUrl,
                     podcastTitle = podcast.title,
                     onUnfollowedClick = { onPodcastUnfollowed(podcast.uri) },
+                    navigateToPodcast = { navigateToPodcast(podcast.uri)},
                     modifier = Modifier
                         .padding(4.dp)
                         .fillMaxHeight()
@@ -155,6 +160,7 @@ private fun FollowedPodcastCarouselItem(
     modifier: Modifier = Modifier,
     podcastImageUrl: String? = null,
     podcastTitle: String? = null,
+    navigateToPodcast: () -> Unit,
     onUnfollowedClick: () -> Unit,
 ) {
     Column(
@@ -173,7 +179,8 @@ private fun FollowedPodcastCarouselItem(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(MaterialTheme.shapes.medium),
+                        .clip(MaterialTheme.shapes.medium)
+                        .clickable { navigateToPodcast() }
                 )
             }
 

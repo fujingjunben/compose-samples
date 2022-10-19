@@ -37,11 +37,13 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 @Composable
 fun Home(
     modifier: Modifier,
-    navigateToPlayer: (String) -> Unit,
+    navigateToEpisode: (String) -> Unit,
+    navigateToPodcast: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
     HomeContent(
-        navigateToPlayer = navigateToPlayer,
+        navigateToEpisode = navigateToEpisode,
+        navigateToPodcast = navigateToPodcast,
         modifier = modifier
             .systemBarsPadding()
             .navigationBarsPadding(),
@@ -53,7 +55,8 @@ fun Home(
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,
-    navigateToPlayer: (String) -> Unit,
+    navigateToEpisode: (String) -> Unit,
+    navigateToPodcast: (String) -> Unit,
     refresh: () -> Unit,
 ) {
     Column(
@@ -67,7 +70,8 @@ fun HomeContent(
         )
 
         Discover(
-            navigateToPlayer = navigateToPlayer,
+            navigateToEpisode = navigateToEpisode,
+            navigateToPodcast = navigateToPodcast,
             Modifier
                 .fillMaxWidth()
                 .weight(1f)
