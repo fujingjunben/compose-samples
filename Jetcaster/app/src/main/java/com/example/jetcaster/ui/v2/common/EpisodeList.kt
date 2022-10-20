@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.jetcaster.R
@@ -47,9 +48,9 @@ import java.time.format.FormatStyle
 @Composable
 fun EpisodeList(
     episodes: List<EpisodeOfPodcast>,
-    navigateToPlayer: (String) -> Unit,
-    onPlay: (EpisodeOfPodcast) -> Unit,
-    header: @Composable LazyItemScope.() -> Unit = {}
+    navigateToEpisode: (String) -> Unit,
+    episodeViewModel: EpisodeViewModel = viewModel(),
+    header: @Composable LazyItemScope.() -> Unit = {},
 ) {
     LazyColumn(
         contentPadding = PaddingValues(0.dp),
@@ -62,8 +63,8 @@ fun EpisodeList(
             EpisodeListItem(
                 episode = item.episode,
                 podcast = item.podcast,
-                onClick = navigateToPlayer,
-                onPlay = { onPlay(item)},
+                onClick = navigateToEpisode,
+                onPlay = { episodeViewModel.play(item)},
                 modifier = Modifier.fillParentMaxWidth()
             )
         }

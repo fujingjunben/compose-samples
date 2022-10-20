@@ -12,6 +12,7 @@ import androidx.media3.session.SessionToken
 import com.example.jetcaster.Graph
 import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.extension.*
+import com.example.jetcaster.util.LogUtil
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.*
@@ -68,7 +69,7 @@ class PlayerControllerImpl(
     }
 
     override fun release() {
-        updateEpisode(episodeState.pause())
+        Log.d(TAG, "release")
         releaseController()
     }
 
@@ -119,6 +120,7 @@ class PlayerControllerImpl(
                 Log.d(TAG, "start")
                 pauseEpisode()
                 playingEpisode(episodeState.updateMedia(episode))
+                positionState.update { episodeState.playbackPosition }
                 mController?.play(episode, true)
             }
         }
@@ -170,6 +172,8 @@ class PlayerControllerImpl(
 
     /* Releases MediaController */
     private fun releaseController() {
+        LogUtil.d("releaseController")
+        pauseEpisode()
         MediaController.releaseFuture(controllerFuture)
     }
 

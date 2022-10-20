@@ -82,8 +82,8 @@ class MainActivity : ComponentActivity() {
     }
 
     /* Overrides onStop from Fragment */
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         controller?.release()
     }
 }

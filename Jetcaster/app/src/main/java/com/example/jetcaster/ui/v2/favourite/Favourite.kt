@@ -63,7 +63,6 @@ fun Favourite(
                 EpisodeList(
                     episodeOfPodcasts,
                     navigateToEpisode,
-                    viewModel::play,
                 ) {
                     FollowedPodcasts(
                         podcasts = episodeOfPodcasts.map { it.podcast }.distinctBy { it.uri },

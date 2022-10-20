@@ -23,6 +23,7 @@ import com.example.jetcaster.ui.v2.explore.Explore
 import com.example.jetcaster.ui.v2.favourite.Favourite
 import com.example.jetcaster.ui.v2.manage.Manage
 import com.example.jetcaster.ui.v2.podcast.PodcastScreen
+import com.example.jetcaster.ui.v2.podcast.PodcastViewModel
 
 @Composable
 fun NavGraph(
@@ -63,6 +64,12 @@ fun NavGraph(
         composable(Screen.Episode.route) { backStackEntry ->
             val arguments = requireNotNull(backStackEntry.arguments)
             val episodeUri = Uri.decode(arguments.getString(Destination.EPISODE))
+            val viewModel: PodcastViewModel = viewModel(
+                factory = PodcastViewModel.provideFactory(
+                    owner = backStackEntry,
+                    defaultArgs = backStackEntry.arguments
+                )
+            )
             EpisodeScreen(
                 uri = episodeUri!!,
                 onBackPress = appState::navigateBack,
@@ -70,12 +77,16 @@ fun NavGraph(
             )
         }
         composable(Screen.Podcast.route) { backStackEntry ->
-            val arguments = requireNotNull(backStackEntry.arguments)
-            val uri = Uri.decode(arguments.getString(Destination.PODCAST))
+            val viewModel: PodcastViewModel = viewModel(
+                factory = PodcastViewModel.provideFactory(
+                    owner = backStackEntry,
+                    defaultArgs = backStackEntry.arguments
+                )
+            )
             PodcastScreen(
-                podcastUri = uri!!,
                 onBackPress = appState::navigateBack,
-                modifier = Modifier
+                modifier = Modifier,
+                viewModel = viewModel
             )
         }
 

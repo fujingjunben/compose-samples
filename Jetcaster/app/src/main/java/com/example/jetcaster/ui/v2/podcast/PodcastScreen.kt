@@ -13,19 +13,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.jetcaster.R
 import com.example.jetcaster.data.Podcast
 
 @Composable
 fun PodcastScreen(
-    podcastUri: String,
     onBackPress: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: PodcastViewModel = viewModel()
 ) {
 
     val appBarColor = MaterialTheme.colors.surface.copy(alpha = 0.87f)
     Column(modifier = modifier.systemBarsPadding()) {
-        PodcastAppBar(backgroundColor = appBarColor,
+        PodcastAppBar(
+            backgroundColor = appBarColor,
             modifier = Modifier.fillMaxWidth(),
             onBackPress
         )

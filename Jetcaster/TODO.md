@@ -14,3 +14,6 @@
 
 ## bug
 * ~~play episode in favourite page, play bar not play in the meantime~~
+
+## FAQ
+* when composable function disappears, viewModel used in this function will finish?

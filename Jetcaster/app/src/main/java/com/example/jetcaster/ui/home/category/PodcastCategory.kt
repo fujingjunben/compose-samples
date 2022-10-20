@@ -66,7 +66,7 @@ fun PodcastCategory(
      */
     Column(modifier = modifier) {
         CategoryPodcasts(viewState.topPodcasts, navigateToPodcast, viewModel)
-        EpisodeList(viewState.episodes, navigateToEpisode, viewModel::play)
+        EpisodeList(viewState.episodes, navigateToEpisode)
     }
 }
 

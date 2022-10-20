@@ -18,6 +18,7 @@ package com.example.jetcaster.ui.player
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -31,6 +32,7 @@ import com.example.jetcaster.data.Episode
 import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.PodcastStore
 import com.example.jetcaster.play.*
+import com.example.jetcaster.util.LogUtil
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -79,14 +81,16 @@ class PlayerViewModel(
 
     init {
         viewModelScope.launch {
-            playerController.positionState.collect{
+            playerController.positionState.collect {
+                LogUtil.d("positionState update: $it")
                 fetchEpisode()
-                uiState = uiState.copy(playbackPosition = it)
+                val position = if (it == 0L) uiState.playbackPosition else it
+                uiState = uiState.copy(playbackPosition = position)
             }
         }
     }
 
-    private suspend fun fetchEpisode(){
+    private suspend fun fetchEpisode() {
         val episode = episodeStore.episodeWithUri(episodeUri).first()
         val podcast = podcastStore.podcastWithUri(episode.podcastUri).first()
         uiState = PlayerUiState(
@@ -99,17 +103,26 @@ class PlayerViewModel(
             playbackPosition = episode.playbackPosition,
             playState = episode.playState
         )
+
+        Log.d(TAG, episode.toString())
     }
 
     fun play(playerAction: PlayerAction) {
-        return playerController.play(uiState.toEpisode().copy(
-            playerAction = playerAction))
+        val playbackPosition =
+            if (playerAction is SeekTo) playerAction.position else uiState.playbackPosition
+        playerController.play(
+            uiState.toEpisode().copy(
+                playerAction = playerAction,
+                playbackPosition = playbackPosition
+            )
+        )
     }
 
     /**
      * Factory for PlayerViewModel that takes EpisodeStore and PodcastStore as a dependency
      */
     companion object {
+        const val TAG = "PlayerViewModel"
         fun provideFactory(
             episodeStore: EpisodeStore = Graph.episodeStore,
             podcastStore: PodcastStore = Graph.podcastStore,

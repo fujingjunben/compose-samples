@@ -8,6 +8,7 @@ import com.example.jetcaster.data.EpisodeStore
 import com.example.jetcaster.data.EpisodeToPodcast
 import com.example.jetcaster.data.toEpisode
 import com.example.jetcaster.play.PlayerController
+import com.example.jetcaster.util.LogUtil
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -28,10 +29,7 @@ class PlayerBarViewModel(
     init {
         viewModelScope.launch {
             episodeStore.episodeWhichIsPlaying().collect { episodeToPodcasts ->
-                debug("episodde: ${episodeToPodcasts.size}")
-                episodeToPodcasts.forEach {
-                    debug("$it")
-                }
+                LogUtil.d("episodde: ${episodeToPodcasts.size}")
                 if (episodeToPodcasts.isNotEmpty()) {
                     viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
                 }
@@ -47,13 +45,6 @@ class PlayerBarViewModel(
                 controller.play(episodeToPodcast.toEpisode())
             }
             else -> {}
-        }
-    }
-
-    companion object {
-        const val TAG = "PlayerBar"
-        fun debug(msg: String){
-            Log.d(TAG, msg)
         }
     }
 }
