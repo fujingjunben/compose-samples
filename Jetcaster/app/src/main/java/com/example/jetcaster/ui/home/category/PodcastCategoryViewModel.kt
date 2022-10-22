@@ -48,7 +48,6 @@ class PodcastCategoryViewModel(
                 podcastWithExtraInfos.filter { !it.isFollowed }
             }
 
-
             val episodesFlow = recentPodcastsFlow.flatMapLatest { podcasts ->
                 val episodeAndPodcasts: List<Flow<List<Pair<Podcast, EpisodeEntity>>>> =
                     podcasts.map { podcastWithExtraInfo ->

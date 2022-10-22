@@ -45,7 +45,7 @@ import com.example.jetcaster.util.viewModelProviderFactoryOf
 @Composable
 fun PodcastCategory(
     categoryId: Long,
-    navigateToEpisode: (String) -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     navigateToPodcast: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {

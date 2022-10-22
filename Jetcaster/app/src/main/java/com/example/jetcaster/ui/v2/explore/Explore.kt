@@ -9,7 +9,7 @@ import com.example.jetcaster.ui.home.Home
 @Composable
 fun Explore(
     modifier: Modifier,
-    navigateToEpisode: (String) -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     navigateToPodcast: (String) -> Unit,
 ) {
     Home(modifier, navigateToEpisode, navigateToPodcast)

@@ -16,14 +16,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.jetcaster.R
 import com.example.jetcaster.data.Podcast
+import com.example.jetcaster.ui.v2.common.EpisodeList
 
 @Composable
 fun PodcastScreen(
     onBackPress: () -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PodcastViewModel = viewModel()
 ) {
 
+    val uiState = viewModel.uiState
     val appBarColor = MaterialTheme.colors.surface.copy(alpha = 0.87f)
     Column(modifier = modifier.systemBarsPadding()) {
         PodcastAppBar(
@@ -31,7 +34,8 @@ fun PodcastScreen(
             modifier = Modifier.fillMaxWidth(),
             onBackPress
         )
-        PodcastInfo()
+        PodcastInfo(uiState.podcast)
+        EpisodeList(episodes = uiState.episodeOfPodcasts, navigateToEpisode = navigateToEpisode)
     }
 }
 
@@ -56,6 +60,6 @@ fun PodcastAppBar(
 }
 
 @Composable
-fun PodcastInfo() {
+fun PodcastInfo(podcast: Podcast?) {
 
 }

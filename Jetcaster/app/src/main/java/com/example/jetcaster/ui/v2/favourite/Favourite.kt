@@ -32,7 +32,7 @@ import com.example.jetcaster.util.ToggleFollowPodcastIconButton
 @Composable
 fun Favourite(
     modifier: Modifier,
-    navigateToEpisode: (String) -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     navigateToPodcast: (String) -> Unit,
     viewModel: FavouriteViewModel = viewModel()
 ) {

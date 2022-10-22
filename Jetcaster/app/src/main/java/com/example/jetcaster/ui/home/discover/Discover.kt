@@ -31,7 +31,7 @@ import com.example.jetcaster.ui.theme.Keyline1
 
 @Composable
 fun Discover(
-    navigateToEpisode: (String) -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     navigateToPodcast: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {

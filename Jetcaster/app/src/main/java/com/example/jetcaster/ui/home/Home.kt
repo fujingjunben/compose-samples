@@ -37,7 +37,7 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 @Composable
 fun Home(
     modifier: Modifier,
-    navigateToEpisode: (String) -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     navigateToPodcast: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -55,7 +55,7 @@ fun Home(
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,
-    navigateToEpisode: (String) -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     navigateToPodcast: (String) -> Unit,
     refresh: () -> Unit,
 ) {

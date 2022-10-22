@@ -33,8 +33,8 @@ sealed class Screen(val route: String) {
     object Player : Screen("player/{episodeUri}") {
         fun createRoute(episodeUri: String) = "player/$episodeUri"
     }
-    object Episode: Screen("episode/{episodeUri}"){
-        fun createRoute(episodeUri: String) = "episode/$episodeUri"
+    object Episode: Screen("episode/{podcastUri}/{episodeUri}"){
+        fun createRoute(podcastUri: String, episodeUri: String) = "episode/$podcastUri/$episodeUri"
     }
     object Podcast: Screen("podcast/{podcastUri}"){
         fun createRoute(podcastUri: String) = "podcast/$podcastUri"
@@ -68,11 +68,12 @@ class JetcasterAppState(
         }
     }
 
-    fun navigateToEpisode(episodeUri: String, from: NavBackStackEntry) {
+    fun navigateToEpisode(podcastUri: String, episodeUri: String, from: NavBackStackEntry) {
         // In order to discard duplicated navigation events, we check the Lifecycle
         if (from.lifecycleIsResumed()) {
-            val encodedUri = Uri.encode(episodeUri)
-            navController.navigate(Screen.Episode.createRoute(encodedUri))
+            val encodedEpisodeUri = Uri.encode(episodeUri)
+            val encodedPodcastUri = Uri.encode(podcastUri)
+            navController.navigate(Screen.Episode.createRoute(encodedPodcastUri, encodedEpisodeUri))
         }
     }
 

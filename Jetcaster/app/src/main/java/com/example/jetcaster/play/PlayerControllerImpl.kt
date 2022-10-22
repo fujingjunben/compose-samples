@@ -17,6 +17,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.lang.Runnable
 
@@ -118,7 +119,7 @@ class PlayerControllerImpl(
             }
             else -> {
                 Log.d(TAG, "start")
-                pauseEpisode()
+                resetPlaying()
                 playingEpisode(episodeState.updateMedia(episode))
                 positionState.update { episodeState.playbackPosition }
                 mController?.play(episode, true)
@@ -247,6 +248,23 @@ class PlayerControllerImpl(
                     playState = episodeState.playState
                 )
             )
+        }
+    }
+
+    private fun resetPlaying(){
+        scope.launch {
+            episodeStore.episodeWhichIsPlaying().map { episodeToPodcasts ->
+                episodeToPodcasts.forEach { (episode, podcast) ->
+                    LogUtil.d("resetPlaying: $episode")
+                    episodeStore.updateEpisode(
+                        episode.copy(
+                            isPlaying = false,
+                            playState = PlayState.PREPARE
+                        )
+                    )
+                }
+
+            }
         }
     }
 

@@ -29,7 +29,7 @@ class PlayerBarViewModel(
     init {
         viewModelScope.launch {
             episodeStore.episodeWhichIsPlaying().collect { episodeToPodcasts ->
-                LogUtil.d("episodde: ${episodeToPodcasts.size}")
+//                LogUtil.d(TAG, "episode: ${episodeToPodcasts.size}")
                 if (episodeToPodcasts.isNotEmpty()) {
                     viewModelState.update { it.copy(episodeToPodcast = episodeToPodcasts[0]) }
                 }
@@ -46,6 +46,10 @@ class PlayerBarViewModel(
             }
             else -> {}
         }
+    }
+
+    companion object {
+        const val TAG:String = "PlayerBarViewModelState"
     }
 }
 

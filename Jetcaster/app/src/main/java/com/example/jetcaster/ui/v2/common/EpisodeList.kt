@@ -48,7 +48,7 @@ import java.time.format.FormatStyle
 @Composable
 fun EpisodeList(
     episodes: List<EpisodeOfPodcast>,
-    navigateToEpisode: (String) -> Unit,
+    navigateToEpisode: (String, String) -> Unit,
     episodeViewModel: EpisodeViewModel = viewModel(),
     header: @Composable LazyItemScope.() -> Unit = {},
 ) {
@@ -72,14 +72,14 @@ fun EpisodeList(
 }
 
 @Composable
-private fun EpisodeListItem(
+fun EpisodeListItem(
     episode: EpisodeEntity,
     podcast: Podcast,
-    onClick: (String) -> Unit,
+    onClick: (String, String) -> Unit,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ConstraintLayout(modifier = modifier.clickable { onClick(episode.uri) }) {
+    ConstraintLayout(modifier = modifier.clickable { onClick(podcast.uri, episode.uri) }) {
         val (
             divider, episodeTitle, podcastTitle, image, playIcon,
             date, addPlaylist, overflow
