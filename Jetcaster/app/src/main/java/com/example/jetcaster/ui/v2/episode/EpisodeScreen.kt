@@ -11,10 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.jetcaster.R
 import com.example.jetcaster.ui.v2.common.EpisodeList
 import com.example.jetcaster.ui.v2.common.EpisodeListItem
+import com.example.jetcaster.ui.v2.common.PodcastTitleCard
 import com.example.jetcaster.ui.v2.podcast.PodcastInfo
 
 @Composable
@@ -33,16 +35,24 @@ fun EpisodeScreen(
             modifier = Modifier.fillMaxWidth(),
             onBackPress
         )
-        PodcastInfo(uiState.episodeOfPodcast?.podcast)
 
         if (item != null) {
+            PodcastTitleCard(podcast = item.podcast)
             EpisodeListItem(
                 episode = item.episode,
                 podcast = item.podcast,
                 onClick = { podcastUri, episodeUri -> navigateToPodcast(podcastUri)},
                 onPlay = { episodeScreenViewModel.play(item) },
-                modifier = Modifier.fillMaxWidth()
+                showPodcastImage = false,
+                modifier = Modifier.fillMaxWidth(),
             )
+
+            if (item.episode.summary != null && item.episode.summary.isNotEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth()
+                    .padding(12.dp)) {
+                    Text(text = item.episode.summary)
+                }
+            }
         }
     }
 }

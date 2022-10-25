@@ -124,6 +124,8 @@ dependencies {
     kapt(libs.androidx.room.compiler)
     coreLibraryDesugaring(libs.core.jdk.desugaring)
 
+    implementation(libs.timber)
+
     val media3_version = "1.0.0-beta02"
 
     implementation("androidx.media3:media3-exoplayer:$media3_version")

@@ -19,6 +19,7 @@ package com.example.jetcaster
 import android.app.Application
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import timber.log.Timber
 
 /**
  * Application which sets up our dependency [Graph] with a context.
@@ -27,6 +28,10 @@ class JetcasterApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         Graph.provide(this)
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
     }
 
     override fun newImageLoader(): ImageLoader {

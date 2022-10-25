@@ -38,7 +38,8 @@
     </plurals>
     <string name="updated_today">Updated today</string>
 
-    <string name="episode_date_duration">%1$s &#8226; %2$d mins</string>
+    <string name="episode_duration">%1$d mins</string>
+    <string name="episode_left_duration">left %1$d mins</string>
 
     <string name="cd_search">Search</string>
     <string name="cd_account">Account</string>

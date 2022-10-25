@@ -1,14 +1,14 @@
 package com.example.jetcaster.util
 
-import android.util.Log
+import timber.log.Timber
 
 object LogUtil {
     private const val TAG = "PlayerBar"
     fun d(msg: String){
-        d(TAG, msg)
+        Timber.d(TAG, msg)
     }
     fun d(tag: String, msg: String) {
-        Log.d(tag, msg)
+        Timber.d(tag, msg)
     }
 
 }

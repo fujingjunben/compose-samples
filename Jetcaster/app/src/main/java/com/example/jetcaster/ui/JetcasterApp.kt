@@ -1,5 +1,6 @@
 package com.example.jetcaster.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -16,6 +17,7 @@ import com.example.jetcaster.ui.theme.JetcasterTheme
 import com.example.jetcaster.ui.v2.NavGraph
 import com.example.jetcaster.ui.v2.Tabs
 import com.example.jetcaster.ui.v2.playerBar.PlayerBar
+import com.example.jetcaster.util.LogUtil
 
 @Composable
 fun PodcastApp() {
@@ -27,13 +29,13 @@ fun PodcastApp() {
     JetcasterTheme {
         Scaffold(
             bottomBar = {
-                    PodcastBottomBar(navController, tabs = tabs)
+                PodcastBottomBar(navController, tabs = tabs)
             }
         ) { paddingValues ->
             NavGraph(
                 navController = navController,
                 modifier = Modifier.padding(paddingValues),
-                toPlay = {uri -> {}}
+                toPlay = { uri -> {} }
             )
         }
     }
@@ -46,9 +48,15 @@ fun PodcastBottomBar(navController: NavController, tabs: Array<Tabs>) {
         ?: Tabs.EXPLORE.route
 
     val routes = remember { Tabs.values().map { it.route } }
-    if (currentRoute in routes) {
+    LogUtil.d("currentRoute: $currentRoute")
+    if (currentRoute != Screen.Player.route) {
         Column {
-            PlayerBar(navController = navController)
+            PlayerBar(
+                modifier = Modifier.background(
+                    color = MaterialTheme.colors.secondary,
+                ),
+                navController = navController
+            )
             BottomNavigation(
                 Modifier.windowInsetsBottomHeight(
                     WindowInsets.navigationBars.add(WindowInsets(bottom = 56.dp))

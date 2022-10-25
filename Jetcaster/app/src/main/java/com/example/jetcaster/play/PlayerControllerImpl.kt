@@ -19,6 +19,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import timber.log.Timber
 import java.lang.Runnable
 
 private data class EpisodeState(
@@ -173,7 +174,7 @@ class PlayerControllerImpl(
 
     /* Releases MediaController */
     private fun releaseController() {
-        LogUtil.d("releaseController")
+        Timber.d("releaseController")
         pauseEpisode()
         MediaController.releaseFuture(controllerFuture)
     }
